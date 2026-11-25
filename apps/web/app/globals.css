@@ -1,0 +1,193 @@
+@import 'tailwindcss';
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-ring: var(--primary);
+  --color-sidebar: var(--sidebar);
+  --font-sans: Arial, Helvetica, sans-serif;
+}
+
+:root {
+  color-scheme: light;
+  --background: #f8faf9;
+  --foreground: #182b26;
+  --card: #ffffff;
+  --primary: #087f5b;
+  --primary-foreground: #ffffff;
+  --muted: #f0f4f2;
+  --muted-foreground: #63756e;
+  --border: #e3eae6;
+  --sidebar: #ffffff;
+  --hero: #eef7f1;
+}
+
+.dark {
+  color-scheme: dark;
+  --background: #101916;
+  --foreground: #e3ede7;
+  --card: #16211c;
+  --primary: #5dd5a5;
+  --primary-foreground: #08281b;
+  --muted: #202e26;
+  --muted-foreground: #a0b3a6;
+  --border: #2b3b32;
+  --sidebar: #131e18;
+  --hero: #183026;
+}
+
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    margin: 0;
+    font-family: Arial, Helvetica, sans-serif;
+    background: var(--background);
+    color: var(--foreground);
+    -webkit-font-smoothing: antialiased;
+  }
+  button:not(:disabled),
+  a {
+    -webkit-tap-highlight-color: transparent;
+  }
+  button:not(:disabled) {
+    cursor: pointer;
+  }
+  ::selection {
+    background: color-mix(in srgb, var(--primary) 22%, transparent);
+  }
+}
+
+.brand-mark {
+  display: flex;
+  width: 31px;
+  height: 31px;
+  align-items: flex-end;
+  gap: 3px;
+  padding: 5px;
+  border-radius: 8px;
+  background: var(--primary);
+}
+.brand-mark span {
+  width: 5px;
+  border-radius: 1px;
+  background: var(--primary-foreground);
+}
+.brand-mark span:nth-child(1) {
+  height: 9px;
+  opacity: 0.55;
+}
+.brand-mark span:nth-child(2) {
+  height: 15px;
+  opacity: 0.8;
+}
+.brand-mark span:nth-child(3) {
+  height: 21px;
+}
+.hero-panel {
+  background: var(--hero);
+}
+.hero-grid {
+  background-image:
+    linear-gradient(
+      to right,
+      color-mix(in srgb, var(--primary) 5%, transparent) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      to bottom,
+      color-mix(in srgb, var(--primary) 5%, transparent) 1px,
+      transparent 1px
+    );
+  background-size: 44px 44px;
+  mask-image: linear-gradient(to right, transparent 30%, #000);
+}
+.box-art {
+  position: absolute;
+  top: 20%;
+  right: 7%;
+  width: 230px;
+  height: 230px;
+}
+.art-box {
+  position: absolute;
+  width: 155px;
+  height: 155px;
+  border: 1px solid color-mix(in srgb, var(--primary) 23%, transparent);
+  border-radius: 16px;
+}
+.art-box-back {
+  right: 0;
+  top: 0;
+  background: color-mix(in srgb, var(--primary) 3%, transparent);
+}
+.art-box-front {
+  left: 0;
+  top: 38px;
+  display: grid;
+  place-items: center;
+  background: color-mix(in srgb, var(--card) 60%, transparent);
+  box-shadow: 10px 14px 30px color-mix(in srgb, var(--primary) 5%, transparent);
+}
+.art-corner {
+  position: absolute;
+  width: 25px;
+  height: 25px;
+  border-color: var(--primary);
+}
+.top-left {
+  left: -1px;
+  top: -1px;
+  border-left: 2px solid;
+  border-top: 2px solid;
+  border-radius: 16px 0 0;
+}
+.bottom-right {
+  right: -1px;
+  bottom: -1px;
+  border-right: 2px solid;
+  border-bottom: 2px solid;
+  border-radius: 0 0 16px;
+}
+.art-label {
+  position: absolute;
+  bottom: 0;
+  left: 5px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  white-space: nowrap;
+  font-size: 8px;
+  letter-spacing: 0.12em;
+  color: var(--primary);
+}
+@media (min-width: 640px) and (max-width: 800px) {
+  .box-art {
+    right: 2%;
+    opacity: 0.25;
+    pointer-events: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+  }
+}

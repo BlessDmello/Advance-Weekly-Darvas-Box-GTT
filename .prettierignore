@@ -1,0 +1,12 @@
+docs/**
+.git/
+.tools/
+node_modules/
+**/dist/
+**/.next/
+**/coverage/
+**/*.tsbuildinfo
+pnpm-lock.yaml
+playwright-report/
+test-results/
+apps/web/next-env.d.ts

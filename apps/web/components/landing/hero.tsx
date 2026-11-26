@@ -1,6 +1,6 @@
 import { Check, Database, LockKeyhole, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { SignInPlaceholder } from './header';
+import { SignInLink } from './header';
 
 export function LandingHero() {
   return (
@@ -19,7 +19,7 @@ export function LandingHero() {
         100 swing trading.
       </p>
       <div className="landing-hero-actions">
-        <SignInPlaceholder hero />
+        <SignInLink hero />
         <Button asChild variant="outline" className="landing-explore">
           <a href="#features">Explore Features</a>
         </Button>

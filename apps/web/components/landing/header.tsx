@@ -1,6 +1,8 @@
 import { LockKeyhole, Menu } from 'lucide-react';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/theme-toggle';
+import { SiteBrand } from '@/components/site-brand';
 
 const links = [
   { href: '#features', label: 'Features' },
@@ -8,29 +10,15 @@ const links = [
   { href: '#preview', label: 'Preview' },
 ];
 
-export function LandingBrand() {
-  return (
-    <a href="#main" className="landing-brand" aria-label="Advanced Darvas Box home">
-      <span className="brand-mark" aria-hidden="true">
-        <span />
-        <span />
-        <span />
-      </span>
-      <span>
-        Advanced <span className="landing-brand-second">Darvas Box</span>
-      </span>
-    </a>
-  );
-}
-
-export function SignInPlaceholder({ hero = false }: { hero?: boolean }) {
+export function SignInLink({ hero = false }: { hero?: boolean }) {
   return (
     <div className={`landing-sign-in ${hero ? 'landing-sign-in-hero' : ''}`}>
-      <Button disabled aria-describedby={hero ? 'hero-sign-in-note' : 'header-sign-in-note'}>
-        <LockKeyhole aria-hidden="true" />
-        Sign In
+      <Button asChild>
+        <Link href="/login">
+          <LockKeyhole aria-hidden="true" />
+          Sign In
+        </Link>
       </Button>
-      <span id={hero ? 'hero-sign-in-note' : 'header-sign-in-note'}>Coming soon</span>
     </div>
   );
 }
@@ -39,7 +27,7 @@ export function LandingHeader() {
   return (
     <header className="landing-header">
       <div className="landing-header-inner">
-        <LandingBrand />
+        <SiteBrand href="#main" />
         <span className="landing-private-label">Private / Invite-only</span>
         <nav className="landing-desktop-nav" aria-label="Main navigation">
           {links.map((link) => (
@@ -50,7 +38,7 @@ export function LandingHeader() {
         </nav>
         <div className="landing-header-actions">
           <ThemeToggle />
-          <SignInPlaceholder />
+          <SignInLink />
         </div>
         <details className="landing-mobile-menu">
           <summary aria-label="Open navigation">

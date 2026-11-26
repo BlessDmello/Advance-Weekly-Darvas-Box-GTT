@@ -1,5 +1,5 @@
 import { LockKeyhole } from 'lucide-react';
-import { LandingBrand } from './header';
+import { SiteBrand } from '@/components/site-brand';
 
 export function LandingFooter() {
   return (
@@ -7,7 +7,7 @@ export function LandingFooter() {
       <div className="landing-container">
         <div className="landing-footer-top">
           <div>
-            <LandingBrand />
+            <SiteBrand href="#main" />
             <p>A disciplined perspective on NSE swing trading.</p>
           </div>
           <span className="landing-footer-private">

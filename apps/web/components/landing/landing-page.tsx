@@ -6,7 +6,7 @@ import { LandingFooter } from './footer';
 
 export function LandingPage() {
   return (
-    <div className="landing">
+    <div className="public-page landing">
       <a className="landing-skip-link" href="#main">
         Skip to content
       </a>

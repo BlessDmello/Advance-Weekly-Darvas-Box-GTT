@@ -192,8 +192,8 @@
   }
 }
 
-/* Public landing page. Keep these styles scoped so the existing workspace shell is preserved. */
-.landing {
+/* Shared public-page palette and typography; keep the workspace shell isolated. */
+.public-page {
   --landing-surface: #f8f9fc;
   --landing-card: #ffffff;
   --landing-text: #152a31;
@@ -208,7 +208,7 @@
   font-family: var(--font-inter), Arial, Helvetica, sans-serif;
   line-height: 1.6;
 }
-.dark .landing {
+.dark .public-page {
   --landing-surface: #101a18;
   --landing-card: #17231f;
   --landing-text: #e4ede9;
@@ -218,25 +218,25 @@
   --landing-accent: #68dba9;
   --landing-accent-soft: #1d392d;
 }
-.landing h1,
-.landing h2,
-.landing h3,
-.landing h4,
+.public-page h1,
+.public-page h2,
+.public-page h3,
+.public-page h4,
 .landing-brand,
 .preview-metric,
 .preview-stock-values dd {
   font-family: var(--font-geist), Arial, Helvetica, sans-serif;
 }
-.landing a {
+.public-page a {
   text-decoration: none;
 }
-.landing a:focus-visible,
-.landing summary:focus-visible {
+.public-page a:focus-visible,
+.public-page summary:focus-visible {
   outline: 2px solid var(--landing-accent);
   outline-offset: 5px;
   border-radius: 4px;
 }
-.landing a:hover {
+.public-page a:hover {
   color: var(--landing-accent);
 }
 .landing [id] {
@@ -335,15 +335,17 @@
   align-items: center;
   gap: 2px;
 }
-.landing-sign-in button {
+.landing-sign-in [data-slot='button'] {
   height: 36px;
   padding: 0 14px;
   background: var(--landing-accent);
   color: var(--landing-card);
   font-size: 13px;
-  opacity: 0.72;
 }
-.dark .landing-sign-in button {
+.landing-sign-in a:hover {
+  color: var(--landing-card);
+}
+.dark .landing-sign-in [data-slot='button'] {
   color: #09291c;
 }
 .landing-sign-in > span {
@@ -401,7 +403,7 @@
   gap: 14px;
   margin-top: 30px;
 }
-.landing-sign-in-hero button {
+.landing-sign-in-hero [data-slot='button'] {
   height: 48px;
   min-width: 165px;
   border-radius: 8px;
@@ -1106,12 +1108,12 @@
     height: 29px;
     gap: 2px;
   }
-  .landing-sign-in button {
+  .landing-sign-in [data-slot='button'] {
     padding-inline: 9px;
     gap: 5px;
     font-size: 12px;
   }
-  .landing-sign-in button svg {
+  .landing-sign-in [data-slot='button'] svg {
     width: 13px;
     height: 13px;
   }
@@ -1181,15 +1183,15 @@
     margin-top: 26px;
   }
   .landing-sign-in-hero,
-  .landing-sign-in-hero button,
+  .landing-sign-in-hero [data-slot='button'],
   .landing-explore {
     width: 100%;
   }
-  .landing-sign-in-hero button {
+  .landing-sign-in-hero [data-slot='button'] {
     height: 48px;
     font-size: 15px;
   }
-  .landing-sign-in-hero button svg {
+  .landing-sign-in-hero [data-slot='button'] svg {
     width: 16px;
     height: 16px;
   }

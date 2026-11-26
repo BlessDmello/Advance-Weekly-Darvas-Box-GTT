@@ -38,16 +38,14 @@ describe('public landing page', () => {
     ).toBeInTheDocument();
   });
 
-  it('keeps Sign In disabled with an explanation and no nonexistent login link', () => {
+  it('links both Sign In actions to the implemented login UI', () => {
     render(<LandingPage />);
-    const signIns = screen.getAllByRole('button', { name: 'Sign In' });
+    const signIns = screen.getAllByRole('link', { name: 'Sign In' });
     expect(signIns).toHaveLength(2);
     for (const button of signIns) {
-      expect(button).toBeDisabled();
-      expect(button).toHaveAccessibleDescription('Coming soon');
+      expect(button).toHaveAttribute('href', '/login');
     }
-    expect(screen.getAllByText('Coming soon')).toHaveLength(2);
-    expect(document.querySelector('a[href="/login"]')).toBeNull();
+    expect(screen.queryByText('Coming soon')).not.toBeInTheDocument();
   });
 
   it('renders three features, four ordered steps, and real anchor destinations', () => {

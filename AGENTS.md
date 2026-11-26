@@ -31,23 +31,39 @@ specifications, and current implementation status in `docs/project_status.md`.
 Advanced Darvas Box is a private, invite-only NSE stock-screening and manual
 swing-trading management application. It is a pnpm modular monolith.
 
-Phase 1 scaffolding and the public landing page at `/` are implemented. The page
-uses the approved Stitch desktop/mobile references, the existing theme provider,
-and local Geist/Inter fonts. Express provides a health API; shared packages, tests,
-and CI are established. Invite-only authentication is a future feature, not an
-existing access-control boundary. Do not describe this release as production-ready.
+Phase 1 scaffolding, the public landing page at `/`, and the login UI at `/login`
+are implemented. Public pages share the brand, palette, theme provider, local
+Geist/Inter fonts, and static chart illustration. Express provides a health API;
+shared packages, tests, and CI are established. Invite-only authentication is a
+future feature, not an existing access-control boundary. Do not describe this
+release as production-ready.
 
-The public landing page may show fixed mock stock values only inside its explicitly
+The public landing and login pages may show fixed mock stock values only inside an explicitly
 labeled "Illustrative Preview — Not Live Market Data" illustration. These values are
 presentation examples, never golden-test inputs, current prices, performance claims,
-or computed signals. The landing page must not fetch API or market data. Sign In
-remains disabled with a visible "Coming soon" label until a real login route exists.
+or computed signals. Public pages must not fetch API or market data. Landing Sign In
+actions navigate to `/login`.
 
 Approved landing references are in Stitch project `7871198770128109512`: desktop
 screen `c5c59502d9bd43d9a11e909aad659beb` and mobile screen
 `56d4657467e44785920baf4d357e8eb9`. Use the mobile supporting copy on all breakpoints;
 preserve the shared headline. Do not copy live-data badges, execution guarantees,
 institutional claims, or unsupported performance statistics from the design export.
+
+Login references in the same Stitch project: desktop screen
+`5de95a5aee7742ecbfd81148778d0b36` and mobile screen
+`475f8dea45524831a58d501e04ca0133`. Preserve the split desktop/single-column mobile
+layout while matching the landing page's exact shared palette, brand, and fonts.
+The references only supply dark variants; light mode uses the existing public palette.
+Do not copy design-review controls, prefilled credentials, fake authentication or
+recovery confirmations, live-feed badges, fabricated session IDs, or security claims.
+
+The login form performs local required/email-format validation only. Valid submission
+displays the authentication-not-connected message without a request, artificial
+loading state, session, or redirect. Remember Me is memory-only UI state; never
+persist passwords or credentials. Keep native form controls disabled until hydration
+so credentials cannot submit through a fallback browser navigation. Forgot Password
+is disabled with a visible Coming soon explanation; no reset or public signup route exists.
 
 Implement only the user's requested milestone. Authentication, collections,
 screening, DMA/CAR/Darvas calculations, portfolio accounting, imports, notification
@@ -207,8 +223,10 @@ Frontend uses port 3000; Express uses port 4000. Browser calls use relative
   empty success scripts, invented golden data, or unnecessary implementation mirrors.
 - For UI/proxy/theme changes, run Playwright, review desktop/mobile behavior, and
   check for overflow. Preserve light/dark/system themes and emerald visual tokens.
-  Landing-page checks include 390px mobile, tablet, and 1440px desktop, the static
-  preview disclaimer, functional section anchors, and absence of runtime data calls.
+  Public-page checks include 360/390px mobile, tablet, and 1440px desktop, the static
+  preview disclaimer, functional navigation, and absence of runtime data calls.
+  Login checks cover inline validation, password visibility, Remember Me, truthful
+  submission feedback, and disabled native submission without JavaScript.
 - Playwright requires Chromium (`pnpm exec playwright install chromium`) and owns
   ports 3000/4000 during tests. Stop only task-owned development processes; never
   kill an unrelated process just to free a port. Use `E2E_PRODUCTION=1` through the

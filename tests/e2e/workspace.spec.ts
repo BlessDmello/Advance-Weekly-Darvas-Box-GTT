@@ -3,6 +3,7 @@ import { expect, test } from '@playwright/test';
 test('public landing page renders without API or external data requests', async ({
   page,
   isMobile,
+  baseURL,
 }) => {
   await page.setViewportSize({ width: isMobile ? 390 : 1440, height: 1000 });
   const errors: string[] = [];
@@ -11,7 +12,10 @@ test('public landing page renders without API or external data requests', async 
   page.on('pageerror', (error) => errors.push(error.message));
   page.on('request', (request) => {
     if (/\/api\//.test(request.url())) dataRequests.push(request.url());
-    if (/^https?:/.test(request.url()) && new URL(request.url()).origin !== 'http://127.0.0.1:3000')
+    if (
+      /^https?:/.test(request.url()) &&
+      new URL(request.url()).origin !== new URL(baseURL!).origin
+    )
       externalRequests.push(request.url());
   });
   await page.goto('/');
@@ -50,12 +54,10 @@ test('supports real section navigation, keyboard access, and safe Sign In contro
   await expect(page.getByRole('link', { name: 'Skip to content' })).toBeFocused();
   await page.keyboard.press('Enter');
   await expect(page.locator('main')).toBeFocused();
-  const signIns = page.getByRole('button', { name: 'Sign In', exact: true });
+  const signIns = page.getByRole('link', { name: 'Sign In', exact: true });
   await expect(signIns).toHaveCount(2);
-  await expect(signIns.nth(0)).toBeDisabled();
-  await expect(signIns.nth(1)).toBeDisabled();
-  await expect(page.getByText('Coming soon', { exact: true })).toHaveCount(2);
-  await expect(page.locator('a[href="/login"]')).toHaveCount(0);
+  await expect(signIns.nth(0)).toHaveAttribute('href', '/login');
+  await expect(signIns.nth(1)).toHaveAttribute('href', '/login');
   await page.getByRole('link', { name: 'Explore Features', exact: true }).click();
   await expect(page).toHaveURL(/#features$/);
   if (isMobile) {

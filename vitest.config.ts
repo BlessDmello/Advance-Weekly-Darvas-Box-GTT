@@ -13,6 +13,17 @@ export default defineConfig({
         },
       },
       {
+        test: {
+          name: 'database-integration',
+          environment: 'node',
+          include: ['tests/integration/**/*.test.ts'],
+          testTimeout: 30_000,
+          // First-run Windows binary download can exceed three minutes.
+          hookTimeout: 600_000,
+          fileParallelism: false,
+        },
+      },
+      {
         plugins: [react()],
         resolve: { alias: { '@': fileURLToPath(new URL('./apps/web/', import.meta.url)) } },
         test: {

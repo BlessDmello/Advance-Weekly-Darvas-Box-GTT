@@ -13,11 +13,13 @@
     "dist"
   ],
   "scripts": {
+    "db:ping": "node --env-file=../../apps/api/.env dist/ping.js",
     "build": "tsc -p tsconfig.build.json",
     "dev": "tsc -p tsconfig.build.json --watch --preserveWatchOutput",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
+    "@darvas/contracts": "workspace:*",
     "mongoose": "9.13.0",
     "zod": "4.6.7"
   }

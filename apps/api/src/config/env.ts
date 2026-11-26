@@ -7,6 +7,7 @@ const environmentSchema = z.object({
   PORT: portSchema.default(4000),
   WEB_ORIGIN: z.url().default('http://localhost:3000'),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
+  CSRF_SECRET: z.string().min(43).max(256).optional(),
 });
 
 export type ApiEnvironment = z.infer<typeof environmentSchema>;

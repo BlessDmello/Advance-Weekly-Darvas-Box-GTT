@@ -1,5 +1,12 @@
 import mongoose, { type Connection } from 'mongoose';
 import { z } from 'zod';
+export type { Connection as DatabaseConnection } from 'mongoose';
+export { createAuthRepository } from './auth-repository.js';
+export { createAuthModels, toPublicUser } from './models/index.js';
+export { prepareAuthStorage, verifyAuthStorage } from './auth-indexes.js';
+export { createInitialAdmin, BootstrapError } from './bootstrap.js';
+export type { InitialAdminRecord } from './bootstrap.js';
+export { isInvitationValid, isSessionValid } from './auth-validity.js';
 
 const databaseConfigSchema = z.object({
   uri: z.string().regex(/^mongodb(?:\+srv)?:\/\//),

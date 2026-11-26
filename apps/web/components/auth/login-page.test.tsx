@@ -1,9 +1,22 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { AuthRequestError, signIn } from '@/lib/api/auth';
+import type * as AuthClient from '@/lib/api/auth';
 import { LoginPage } from './login-page';
 import { LoginForm } from './login-form';
+
+const router = vi.hoisted(() => ({ replace: vi.fn(), refresh: vi.fn() }));
+vi.mock('next/navigation', () => ({ useRouter: () => router }));
+vi.mock('@/lib/api/auth', async (original) => ({
+  ...(await original<typeof AuthClient>()),
+  signIn: vi.fn(),
+}));
+beforeEach(() => {
+  vi.clearAllMocks();
+  vi.mocked(signIn).mockResolvedValue(undefined);
+});
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -80,9 +93,7 @@ describe('login UI', () => {
     await user.type(screen.getByLabelText('Email address'), 'preview@example.com');
     await user.click(screen.getByRole('button', { name: 'Sign In to Workspace' }));
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
-    expect(screen.getByRole('status')).toHaveTextContent(
-      'Sign-in functionality will be available when authentication is connected.',
-    );
+    await waitFor(() => expect(router.replace).toHaveBeenCalledWith('/dashboard'));
   });
 
   it('shows and hides the existing password value accessibly', async () => {
@@ -102,10 +113,8 @@ describe('login UI', () => {
     expect(password).toHaveValue('ui-only-passphrase');
   });
 
-  it('changes Remember Me without sending or persisting credentials on valid submit', async () => {
+  it('passes Remember Me to authentication without persisting credentials', async () => {
     const user = userEvent.setup();
-    const fetchSpy = vi.fn();
-    vi.stubGlobal('fetch', fetchSpy);
     const storageSpy = vi.spyOn(Storage.prototype, 'setItem');
     render(<LoginForm />);
     const remember = screen.getByRole('checkbox', { name: 'Remember Me' });
@@ -114,17 +123,48 @@ describe('login UI', () => {
     expect(remember).toBeChecked();
     await user.click(remember);
     expect(remember).not.toBeChecked();
+    await user.click(remember);
     await user.type(screen.getByLabelText('Email address'), 'preview@example.com');
     await user.type(screen.getByLabelText('Password', { exact: true }), 'ui-only-passphrase');
     await user.click(screen.getByRole('button', { name: 'Sign In to Workspace' }));
-    expect(screen.getByRole('status')).toHaveTextContent(
-      'Sign-in functionality will be available when authentication is connected.',
-    );
+    await waitFor(() => expect(router.replace).toHaveBeenCalledWith('/dashboard'));
+    expect(signIn).toHaveBeenCalledWith('preview@example.com', 'ui-only-passphrase', true);
     expect(screen.getByRole('button', { name: 'Sign In to Workspace' })).toBeEnabled();
-    expect(fetchSpy).not.toHaveBeenCalled();
     expect(storageSpy).not.toHaveBeenCalled();
     await user.type(screen.getByLabelText('Password', { exact: true }), 'x');
     expect(screen.queryByRole('status')).not.toBeInTheDocument();
+  });
+
+  it('preserves email, clears the password and shows an accessible generic backend error', async () => {
+    vi.mocked(signIn).mockRejectedValueOnce(
+      new AuthRequestError('Email or password is incorrect.'),
+    );
+    const user = userEvent.setup();
+    render(<LoginForm />);
+    await user.type(screen.getByLabelText('Email address'), 'preview@example.com');
+    await user.type(screen.getByLabelText('Password', { exact: true }), 'wrong-passphrase');
+    await user.click(screen.getByRole('button', { name: 'Sign In to Workspace' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Email or password is incorrect.');
+    expect(screen.getByLabelText('Email address')).toHaveValue('preview@example.com');
+    expect(screen.getByLabelText('Password', { exact: true })).toHaveValue('');
+    expect(router.replace).not.toHaveBeenCalled();
+  });
+
+  it('shows loading only while authentication is genuinely pending', async () => {
+    let resolve!: () => void;
+    vi.mocked(signIn).mockReturnValueOnce(
+      new Promise<void>((done) => {
+        resolve = done;
+      }),
+    );
+    const user = userEvent.setup();
+    render(<LoginForm />);
+    await user.type(screen.getByLabelText('Email address'), 'preview@example.com');
+    await user.type(screen.getByLabelText('Password', { exact: true }), 'test-passphrase');
+    await user.click(screen.getByRole('button', { name: 'Sign In to Workspace' }));
+    expect(screen.getByRole('button', { name: 'Signing in…' })).toBeDisabled();
+    resolve();
+    await waitFor(() => expect(router.replace).toHaveBeenCalledWith('/dashboard'));
   });
 
   it('disables native form submission until client interaction is available', () => {
@@ -134,7 +174,7 @@ describe('login UI', () => {
     );
     expect(document.querySelector('fieldset')?.hasAttribute('disabled')).toBe(true);
     expect(document.querySelector('noscript')?.textContent).toContain(
-      'Sign-in is not available yet.',
+      'No credentials are submitted without it.',
     );
   });
 });

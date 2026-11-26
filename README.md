@@ -2,9 +2,10 @@
 
 A private, invite-only NSE stock analysis and manual swing-trading workspace.
 Phase 1 establishes a pnpm monorepo, a responsive themed frontend, an Express health
-API, shared package boundaries, and a tested development toolchain. Authentication
-and trading features are not implemented. Run this scaffold locally; invite-only
-access is a future feature, not an existing security boundary.
+API, shared package boundaries, and a tested development toolchain. Email/password
+login, MongoDB sessions, logout and a minimal protected workspace are implemented.
+Invitation workflows and trading features remain deferred. This is not a
+production-ready trading application.
 
 ## Prerequisites
 
@@ -63,19 +64,20 @@ prices, fabricated portfolios, broker integrations, or automatic transactions.
 
 ## Commands
 
-| Command             | Operation                                                                       |
-| ------------------- | ------------------------------------------------------------------------------- |
-| `pnpm dev`          | Build packages once, then watch packages and run both apps                      |
-| `pnpm dev:web`      | Build packages and run Next.js on port 3000                                     |
-| `pnpm dev:api`      | Build packages and run Express on port 4000                                     |
-| `pnpm build`        | Build the workspace in dependency order                                         |
-| `pnpm typecheck`    | Build declarations, generate Next types, check all source and test/config files |
-| `pnpm lint`         | Run ESLint with no warnings allowed                                             |
-| `pnpm test`         | Run Vitest unit, component, export, and Supertest API tests                     |
-| `pnpm test:watch`   | Run Vitest interactively                                                        |
-| `pnpm test:e2e`     | Launch isolated local apps and run desktop/mobile Chromium tests                |
-| `pnpm format`       | Format implementation files with Prettier                                       |
-| `pnpm format:check` | Verify formatting without changes                                               |
+| Command                | Operation                                                                       |
+| ---------------------- | ------------------------------------------------------------------------------- |
+| `pnpm dev`             | Build packages once, then watch packages and run both apps                      |
+| `pnpm dev:web`         | Build packages and run Next.js on port 3000                                     |
+| `pnpm dev:api`         | Build packages and run Express on port 4000                                     |
+| `pnpm build`           | Build the workspace in dependency order                                         |
+| `pnpm typecheck`       | Build declarations, generate Next types, check all source and test/config files |
+| `pnpm admin:bootstrap` | Create the initial development Family/Admin interactively, once                 |
+| `pnpm lint`            | Run ESLint with no warnings allowed                                             |
+| `pnpm test`            | Run Vitest unit, component, export, and Supertest API tests                     |
+| `pnpm test:watch`      | Run Vitest interactively                                                        |
+| `pnpm test:e2e`        | Launch isolated local apps and run desktop/mobile Chromium tests                |
+| `pnpm format`          | Format implementation files with Prettier                                       |
+| `pnpm format:check`    | Verify formatting without changes                                               |
 
 Install the browser before the first E2E run:
 
@@ -110,7 +112,7 @@ apps/
 packages/
   contracts/            Browser-safe Zod HTTP schemas and inferred types
   strategy-core/        Pure TypeScript strategy module boundaries only
-  database/             Explicit Mongoose connection lifecycle; no models
+  database/             Explicit Mongoose lifecycle, identity models, atomic bootstrap
   test-fixtures/        Future golden source manifests and reviewed outputs
 tests/e2e/              Real desktop/mobile browser smoke tests
 .github/workflows/      Linux and Windows CI, no cloud deployment
@@ -143,19 +145,19 @@ responsive sidebar/mobile navigation foundations live in the frontend.
 
 Each app loads its own file; the root `.env.example` is a reference, not an env loader.
 
-| Variable              | Location             | Current requirement                                                         |
-| --------------------- | -------------------- | --------------------------------------------------------------------------- |
-| `API_INTERNAL_ORIGIN` | Web `.env.local`     | Defaults to `http://127.0.0.1:4000`; server-only rewrite target             |
-| `NODE_ENV`            | API `.env` / process | `development`, `test`, or `production`                                      |
-| `HOST`                | API `.env`           | Defaults to `127.0.0.1`                                                     |
-| `PORT`                | API `.env`           | Defaults to `4000`                                                          |
-| `WEB_ORIGIN`          | API `.env`           | Defaults to `http://localhost:3000`; reserved for future origin/CSRF policy |
-| `LOG_LEVEL`           | API `.env`           | Defaults to `info`; structured Pino JSON                                    |
-| `MONGODB_URI`         | API `.env`, later    | Optional now; required only when explicitly connecting                      |
-| `MONGODB_DB_NAME`     | API `.env`, later    | Explicit development database name; optional now                            |
-| `SESSION_SECRET`      | API `.env`, later    | Future authentication only                                                  |
-| `RESEND_API_KEY`      | API `.env`, later    | Future notifications only                                                   |
-| `RESEND_FROM`         | API `.env`, later    | Future verified email sender                                                |
+| Variable              | Location             | Current requirement                                                                   |
+| --------------------- | -------------------- | ------------------------------------------------------------------------------------- |
+| `API_INTERNAL_ORIGIN` | Web `.env.local`     | Defaults to `http://127.0.0.1:4000`; server-only rewrite target                       |
+| `NODE_ENV`            | API `.env` / process | `development`, `test`, or `production`                                                |
+| `HOST`                | API `.env`           | Defaults to `127.0.0.1`                                                               |
+| `PORT`                | API `.env`           | Defaults to `4000`                                                                    |
+| `WEB_ORIGIN`          | API `.env`           | Defaults to `http://localhost:3000`; reserved for future origin/CSRF policy           |
+| `LOG_LEVEL`           | API `.env`           | Defaults to `info`; structured Pino JSON                                              |
+| `MONGODB_URI`         | API `.env`           | Optional for startup; required for explicit `pnpm db:ping`; never commit the real URI |
+| `MONGODB_DB_NAME`     | API `.env`           | Set to `advanced_darvas_dev` for the explicit development ping                        |
+| `SESSION_SECRET`      | API `.env`, later    | Future authentication only                                                            |
+| `RESEND_API_KEY`      | API `.env`, later    | Future notifications only                                                             |
+| `RESEND_FROM`         | API `.env`, later    | Future verified email sender                                                          |
 
 The browser uses relative `/api/v1` requests. Next.js rewrites them to Express,
 preserving the versioned path. Do not add server credentials to `NEXT_PUBLIC_*`.
@@ -179,17 +181,126 @@ Health works without MongoDB:
 }
 ```
 
-## MongoDB Atlas later
+## MongoDB Atlas connectivity
 
-Use a dedicated development Atlas database and least-privilege credentials. The
-database package opens no connection at import time. A future API composition root
-can call `readDatabaseConfig(process.env)`, then `connectDatabase(config)`, and close
-the returned connection with `disconnectDatabase(connection)` during shutdown.
-The caller owns the connection. Automatic collection and index creation are disabled.
-No schema, index, migration, seed, or Atlas write is included in Phase 1.
+Keep real credentials in the ignored `apps/api/.env` file. The tracked example
+contains placeholders only. Percent-encode reserved characters in the username or
+password before putting them into a MongoDB URI. Rotate credentials if they have
+been exposed in a tracked file or diagnostic output.
 
-Keep MongoDB configuration in the backend. Neither frontend builds nor isolated
-unit tests need an Atlas account, network access, or production credentials.
+For the development connectivity check, set both the URI database path and
+`MONGODB_DB_NAME` to `advanced_darvas_dev`, using `NODE_ENV=development`.
+Then run from the repository root with the pinned Node.js and pnpm:
+
+```powershell
+pnpm db:ping
+```
+
+The command builds the database dependency graph, loads `apps/api/.env` through the same Node
+environment-file convention as the backend, and reuses `readDatabaseConfig`,
+`connectDatabase`, and `disconnectDatabase`. Existing process environment variables
+take precedence over the file; a database mismatch, placeholder, or unsupported
+environment is rejected before connecting.
+
+Only `{ ping: 1 }` is sent, with a five-second command timeout. The owned connection
+is closed afterwards. Output contains a fixed success/failure message rather than
+credentials, a complete URI, or raw driver exceptions. A successful ping confirms
+connectivity, not that collections or indexes have been provisioned.
+
+The database package opens no connection at import time. Automatic collection and
+index creation remain disabled. The ping performs no collection, index, account,
+or record write; normal API startup and health checks still work without MongoDB.
+Neither frontend builds nor isolated unit tests need an Atlas account or credentials.
+The live ping is an explicit operator command and is not part of CI.
+
+## First Admin bootstrap (development only)
+
+Identity models exist for `families`, `users`, `sessions` and `invitations`. They do
+not connect or provision database objects on import. The Login UI now uses real
+credentials and MongoDB-backed sessions; create the initial Admin once before use.
+
+To create the first workspace/Admin intentionally, open an interactive VS Code
+PowerShell terminal at the repository root, with the existing development MongoDB
+settings in ignored `apps/api/.env` and `NODE_ENV=development`, then run:
+
+```powershell
+pnpm admin:bootstrap
+```
+
+Both database settings must target `advanced_darvas_dev`. The command builds the API
+and its shared dependencies. It prompts for workspace name (default: Family
+Workspace), Admin email, display name, hidden password and confirmation. Passwords
+must contain 15–128 characters; they are not trimmed and need no arbitrary character
+composition. No password arguments, browser storage, generated password, or email
+verification claim is used. Never paste credentials into chat or tracked examples.
+
+The CLI explicitly prepares the four identity collections and their indexes. It
+then creates an ACTIVE Family and ADMIN user together in a MongoDB transaction,
+using Argon2id with a random salt, 64 MiB memory, three passes and parallelism one.
+The workspace ID is its ObjectId. Email is trimmed/lowercase and globally unique;
+dots and plus tags are preserved. The Admin email remains unverified.
+
+A permanent uniquely indexed Family marker prevents two concurrent bootstrap
+attempts from succeeding. Existing identity data rejects a second initialization,
+including when the original Admin is disabled. Transactions and verified indexes
+are required; no unsafe fallback or automatic account overwrite is provided. Failed
+transactions roll back identity records; prepared empty collections/indexes may
+remain and are safe to reuse. An uncertain commit result must be checked before a
+retry; the command never resets initialization. Connections close on completion
+and errors. Ctrl+C during prompts cancels before a connection is opened.
+
+Production bootstrap is refused; it requires separate approval and implementation.
+There is no production override flag. Do not run the live CLI as a test. The CLI
+does not issue a session. Public registration, reset and invitation acceptance
+remain unimplemented; no real account is created automatically.
+
+## Local sign-in and sign-out
+
+Use your existing bootstrapped Admin and ignored `apps/api/.env`, then run `pnpm dev`
+from the root and open **http://localhost:3000/login**. Use the host matching backend
+`WEB_ORIGIN`; localhost and 127.0.0.1 are different origins. No new local secret is
+required. If pnpm is absent from PATH and this checkout already has ignored local
+tools, enable them for the current PowerShell terminal only:
+
+```powershell
+$env:Path = "$PWD\.tools\node-v26.13.1-win-x64;$PWD\.tools\pnpm\node_modules\.bin;$env:Path"
+pnpm dev
+```
+
+The form obtains CSRF protection, posts credentials to `/api/v1/auth/login`, and
+confirms `/api/v1/auth/me` before opening `/dashboard`. That page is only a protected
+workspace shell with the current display name and Sign Out. It has no trading data.
+Sign Out posts to `/api/v1/auth/logout`, revokes the stored session and clears cookies.
+Already authenticated visitors to `/login` are redirected server-side to `/dashboard`,
+including with JavaScript disabled. Invalid or revoked cookies still show the form;
+the route verifies the session instead of trusting cookie presence.
+Failure messages are generic; attempted passwords are cleared and never stored in
+browser storage. Forgot Password remains disabled; there is no public signup.
+
+Sessions use 32-byte random opaque tokens, storing only SHA-256 hashes in MongoDB.
+They expire absolutely after eight hours, or seven days with Remember Me. The
+normal cookie lasts for the browser session; Remember Me sets persistent expiry.
+Every session use checks expiry, revocation and active User/Family. A fresh token
+replaces the presented browser session on login. TTL is cleanup only.
+
+Cookies are HttpOnly, SameSite=Lax, Path=/ and host-only. Production uses Secure,
+`__Host-` cookie names and requires HTTPS `WEB_ORIGIN` plus a stable randomly generated
+32-byte base64url `CSRF_SECRET` in backend secrets. Local development uses an
+ephemeral signing key if absent. Session tokens never enter JSON, URLs or client
+storage. CSRF tokens from GET `/api/v1/auth/csrf` are non-authentication tokens,
+kept in memory and sent as `X-CSRF-Token`. Signed binding changes from an anonymous
+nonce to the session at login. Mutations also require the exact allowed Origin.
+
+Auth responses follow the API Design's `{data}`/`{error}` format; the legacy health
+response keeps its success flag. MongoDB is connected lazily and existing identity
+indexes are verified read-only. Missing configuration, unavailable MongoDB or missing
+indexes cause auth to fail closed with sanitized errors; health still works. HTTP
+requests never create collections/indexes. API shutdown closes its owned connection.
+
+Login throttling uses per-account failed-attempt limits plus a transport-IP limit,
+in process memory. Proxy trust is disabled; the IP limit can be shared behind Next.
+Production Vercel/Render proxy trust, distributed limits, TLS cookie behavior and
+secrets still require deployment verification. No production rollout is included.
 
 ## Tests and CI
 
@@ -204,14 +315,38 @@ GitHub Actions runs a frozen-lockfile install, formatting, lint, typecheck, test
 and builds on Linux and Windows. Linux also runs Chromium against compiled apps.
 No production credentials or deployments are configured.
 
+The `database-integration` Vitest project starts a disposable loopback-only MongoDB
+replica set, uses generated `advanced_darvas_test_<uuid>` databases, and shuts down
+its owned server. It never loads application `.env` or uses Atlas credentials.
+MongoDB 8.2.6 is pinned; the first test run needs network access to download and
+checksum-verify its platform binary into ignored `node_modules/.cache/mongodb-binaries`.
+Subsequent runs reuse it. Tests cover real unique indexes, concurrent bootstrap,
+rollback, secret exclusion and token validity without waiting for TTL cleanup.
+
+Playwright also starts a disposable replica set with a synthetic Admin using
+`test:auth-server`, never the real backend `.env` or development database. That helper
+is test-only; use `pnpm dev` for manual sign-in. Compiled-app tests exercise compiled
+Express and Next with HTTP test cookies. Production cookie attributes are tested
+separately in HTTP integration tests; this is not a Vercel/Render TLS deployment test.
+`E2E_WEB_PORT`/`E2E_API_PORT` can select unused local ports; defaults remain 3000/4000.
+Production Playwright startup rebuilds Next with the selected API origin before
+starting it, so compiled rewrites and server-side requests use the same test backend.
+Rebuild with your normal `API_INTERNAL_ORIGIN` before using those production artifacts
+outside the browser tests; the development server uses its separate dev output.
+
+```powershell
+pnpm build:packages
+pnpm exec vitest run --project database-integration
+```
+
 ## Scope and next milestone
 
-Deferred: invite-only authentication, ownership enforcement, collections/indexes,
+Deferred: invitation workflows, business-resource ownership enforcement, non-identity collections/indexes,
 CSV/XLSX import, screening, DMA/CAR/Darvas calculations, portfolio accounting,
 notifications, scheduled jobs, live feeds, cloud deployment, and broker automation.
 
-Recommended next milestone: invite-only authentication and tenancy contracts,
-including a production same-origin cookie/CSRF design review before deployment.
+Recommended next milestone: invitation lifecycle and business-resource tenancy,
+with a production same-origin cookie/CSRF deployment review before deployment.
 Resolve the documented precision, source-fixture, and collection-inventory questions
 before implementing persistence or strategy algorithms. The approved specifications
 are excluded from formatting and remain the requirements baseline.

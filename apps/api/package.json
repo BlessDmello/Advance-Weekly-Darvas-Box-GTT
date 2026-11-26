@@ -4,12 +4,18 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "admin:bootstrap": "node --env-file=.env dist/cli/admin-bootstrap.js",
     "dev": "tsx watch --include ../../packages/**/dist/**/*.js --env-file-if-exists=.env src/server.ts",
     "build": "tsc -p tsconfig.build.json",
     "start": "node --env-file-if-exists=.env dist/server.js",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
+    "cookie-parser": "1.4.7",
+    "csrf-csrf": "4.1.0",
+    "@darvas/database": "workspace:*",
+    "@inquirer/prompts": "8.8.1",
+    "argon2": "0.45.2",
     "@darvas/contracts": "workspace:*",
     "express": "5.3.0",
     "express-rate-limit": "8.7.5",
@@ -19,6 +25,7 @@
     "zod": "4.6.7"
   },
   "devDependencies": {
+    "@types/cookie-parser": "1.4.10",
     "@types/express": "5.0.6",
     "tsx": "4.23.15"
   }

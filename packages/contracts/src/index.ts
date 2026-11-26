@@ -1,4 +1,5 @@
 import { z } from 'zod';
+export * from './auth.js';
 
 export const nonEmptyStringSchema = z.string().trim().min(1);
 export const portSchema = z.coerce.number().int().min(1).max(65535);

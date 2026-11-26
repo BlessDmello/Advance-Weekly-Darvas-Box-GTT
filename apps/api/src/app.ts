@@ -7,8 +7,18 @@ import type { ApiEnvironment } from './config/env.js';
 import { createLogger } from './config/logger.js';
 import { errorHandler, notFoundHandler, sendError } from './middleware/error-handler.js';
 import { healthRouter } from './routes/v1/health.js';
+import { authRouter } from './routes/v1/auth.js';
+import type { AuthRuntime } from './modules/auth/types.js';
 
-export function createApp(environment: ApiEnvironment) {
+export function createApp(
+  environment: ApiEnvironment,
+  auth: AuthRuntime = {
+    repository: async () => {
+      throw new Error('Auth unavailable.');
+    },
+    close: async () => {},
+  },
+) {
   const app = express();
   app.disable('x-powered-by');
   // No proxy trust is enabled implicitly. Deployment must configure trusted hops explicitly.
@@ -46,6 +56,7 @@ export function createApp(environment: ApiEnvironment) {
   );
   app.use(express.json({ limit: '32kb' }));
   app.use('/api/v1', healthRouter);
+  app.use('/api/v1/auth', authRouter(environment, auth));
   app.use(notFoundHandler);
   app.use(errorHandler);
   return app;

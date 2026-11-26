@@ -1,7 +1,7 @@
 # Advanced Darvas Box — Project Status
 
 - **Last updated:** 26 November 2026 (Asia/Kolkata)
-- **Current milestone:** Login UI implemented, QA verified, and delivered to `dev`; authentication deferred
+- **Current milestone:** Authentication Stage 3 and authenticated login-route redirect implemented and verified locally
 - **Overall state:** Frontend foundation complete; business features and deployment pending
 
 This is the living implementation-status record. Requirements remain in the four
@@ -16,14 +16,17 @@ and verification accurately rather than treating planned features as implemented
 | Monorepo            | pnpm workspaces with `apps/web`, `apps/api`, and four shared packages                                                                               |
 | Frontend foundation | Next.js App Router, strict TypeScript, Tailwind, shadcn/ui Button/Card primitives, emerald theme tokens                                             |
 | Public landing page | Route `/`, responsive header and mobile menu, approved hero copy, illustrative preview, three feature cards, four-step workflow, educational footer |
-| Login UI            | Route `/login`, shared public design system, local form validation, visibility toggle, memory-only Remember Me, disabled recovery, static preview   |
+| Login UI            | Route `/login`, preserved design, real login with local validation, password toggle, remembered sessions, disabled recovery and static preview      |
 | Appearance          | Light, dark, and system themes with persistence; locally hosted Geist/Inter fonts and licenses                                                      |
 | Backend foundation  | Express, Zod environment validation, structured redacted logging, security middleware, request IDs, centralized errors                              |
 | Health endpoint     | `GET /api/v1/health`; works without MongoDB                                                                                                         |
 | API routing         | Same-origin Next.js rewrite from `/api/v1/*` to the local Express API                                                                               |
-| Contracts           | Shared Zod success/error/health contracts and basic validation utilities                                                                            |
+| Contracts           | Shared Zod health/error and identity contracts, normalized email, roles/statuses and safe user DTO allowlist                                        |
 | Strategy-core       | Framework-independent boundaries for DMA, CAR, Darvas, suitability, and capital allocation; no trading calculations                                 |
-| Database package    | Explicit Mongoose connection/disconnection helpers; no connections at import, models, migrations, or automatic collection/index creation            |
+| Database package    | Explicit lifecycle; Family/User/Session/Invitation models, explicit indexes, atomic bootstrap; no import connections or automatic DDL               |
+| Admin bootstrap     | Interactive development-only CLI; one-time Family/Admin transaction; user reports successful development workspace/Admin creation                   |
+| Authentication      | Login/current-user/logout/CSRF APIs, hashed MongoDB sessions and protected minimal workspace; isolated API/browser verification passed              |
+| Atlas diagnostic    | Explicit development-only `pnpm db:ping`; configuration guarded and credentials redacted; live ping succeeded against `advanced_darvas_dev`         |
 | Test fixtures       | Structure and provenance guidance for future verified golden tests; no fabricated historical market data                                            |
 | Quality tooling     | ESLint, Prettier, Vitest, React Testing Library, Supertest, and Playwright                                                                          |
 | CI                  | GitHub Actions configured for Linux/Windows checks and Linux Chromium tests; no cloud deployment                                                    |
@@ -51,7 +54,7 @@ and verification accurately rather than treating planned features as implemented
 - Stitch project `7871198770128109512`: desktop
   `5de95a5aee7742ecbfd81148778d0b36`, mobile
   `475f8dea45524831a58d501e04ca0133`.
-- `/login` is public UI only. The approved split desktop and single-column mobile
+- `/login` is public and now connects real authentication. The approved split desktop and single-column mobile
   structure uses the landing page's shared brand, Geist/Inter fonts, emerald
   palette, borders, and existing light/dark/system theme infrastructure.
 - Stitch supplies dark login references only. Light mode uses the existing public
@@ -60,20 +63,228 @@ and verification accurately rather than treating planned features as implemented
 - Email and password are required; email format is validated locally. Inline errors
   are associated with their inputs, values survive validation, and the first invalid
   field receives focus. Password visibility and Remember Me are interactive.
-- Remember Me is memory-only UI state with an availability explanation. Forgot
+- Remember Me requests a persistent session lasting up to seven days. Forgot
   Password is disabled with Coming soon. There is no public signup.
-- Valid submission announces: **Sign-in functionality will be available when
-  authentication is connected.** There is no request, artificial delay/loading,
-  credential storage, session, success claim, or dashboard redirect.
+- Valid local submission obtains CSRF protection and posts to the real login API,
+  then confirms `/auth/me` before `/dashboard` navigation. Loading lasts only for real
+  requests; attempted passwords are cleared and email survives errors. No credential
+  or token browser-storage write, artificial delay or fake success is used.
 - Native form controls remain disabled until hydration; the no-JavaScript notice
-  explains that sign-in is unavailable.
+  explains that JavaScript is required and credentials are not submitted without it.
 - The desktop panel reuses the landing illustration and fixed stock examples,
   labeled **Illustrative Preview — Not Live Market Data**. DMA/CAR labels and
   weekly trigger values are mock presentation content, not calculations.
-- The landing content and layout are preserved; its two Sign In actions now open
-  `/login`. No backend, shared-package, dependency, or approved specification changes.
+- The landing content and layout remain preserved; its two Sign In actions open
+  `/login`. Stage 3 changes auth behavior only; no trading dashboard is implemented.
 
-## Latest application verification
+## Authenticated login-route redirect — 26 November 2026
+
+- The `/login` Server Component now verifies the incoming session through the
+  existing no-store `/auth/me` helper and redirects authenticated visitors to
+  `/dashboard` before rendering the form. It is explicitly dynamic; cookie
+  presence alone does not grant authentication or trigger a redirect. Anonymous,
+  invalid/revoked and unavailable-validation cases retain the public login form.
+- Kept the approved Login Page components and visual styles unchanged. Extended
+  the real-session browser regression to cover direct `/login` navigation, the
+  landing Sign In link, JavaScript-disabled authenticated navigation, and replayed
+  revoked cookies without a redirect loop. Existing logout behavior is preserved.
+- Typecheck, zero-warning lint, all 149 tests across 22 files, production build,
+  formatting and whitespace checks passed. All 24 compiled-app browser checks passed
+  on isolated ports 3001/4001, including the new authenticated redirect scenarios in
+  both desktop and mobile projects. `/login` is now dynamic; `/` remains static.
+  Documentation records this behavior; older static-login results below are historical.
+- Two initial build attempts failed removing a read-only OneDrive generated Next
+  manifest directory. Removed only that verified ignored production artifact;
+  the subsequent root build and browser-run production rebuild passed. Development
+  output and user processes were preserved. Test-owned servers were stopped.
+- No backend endpoints, models, credentials, dependencies, approved specifications,
+  commits or pushes were changed by this follow-up. Tests use isolated synthetic
+  accounts, not the real Admin or development database.
+
+## Production browser-test origin fix — 26 November 2026
+
+- Fixed the reviewed alternate-port isolation issue: production Playwright startup
+  now builds Next under the selected `API_INTERNAL_ORIGIN` before starting it under
+  the same environment. Compiled rewrites and server-side session reads therefore
+  use the same disposable backend. Production startup allows three minutes for the
+  build; development startup retains its existing timeout and behavior.
+- Reran workspace typecheck, zero-warning lint and all 149 tests across 22 files:
+  passed. Ran `pnpm test:e2e --workers=2` with `E2E_PRODUCTION=1`, web port 3001 and
+  API port 4001: all 24 desktop/mobile checks passed, including real fixture login
+  and logout. The runner rebuilt shared packages, Express and the production
+  frontend; a separate root `pnpm build` was not rerun for this configuration fix.
+- Inspected the generated routes manifest and confirmed `/api/v1/*` rewrites to
+  port 4001. The existing development applications on 3000/4000 were not stopped.
+  Test-owned alternate-port servers were cleaned up. Formatting and whitespace
+  checks passed. Documentation now explains build-time origins and rebuilding
+  normal production artifacts after a custom-port browser run.
+- Only Playwright configuration and workflow/status documentation changed in this
+  follow-up. Application behavior, dependencies, environment credentials and four
+  approved specifications were preserved. Prior uncommitted work remains intact;
+  no commit, push, Atlas login or real-account test was performed.
+
+## Prior Authentication Stage 3 — 26 November 2026
+
+- User confirmed the first Family/Admin was created with the CLI after Stage 2.
+  This is user-reported state, not a new database inspection. Stage 3 tests never
+  use the real Admin password, development database, or that account.
+- Implemented POST `/api/v1/auth/login`, GET `/api/v1/auth/me`, POST
+  `/api/v1/auth/logout`, and approved support GET `/api/v1/auth/csrf`. New auth
+  envelopes follow the API Design's `{data}`/`{error}` format; legacy health stays
+  unchanged. Input is Zod-validated and normalized, password verification reuses
+  Argon2id with comparable unknown-account work, and disabled User/Family responses
+  do not enumerate account state. Bootstrap email verification is not required.
+- Sessions use opaque 32-byte tokens, SHA-256 hashes only in MongoDB, active
+  membership checks, explicit expiry/revocation and login rotation. Eight-hour
+  absolute normal lifetime; Remember Me uses seven days and a persistent cookie.
+  Cookies are HttpOnly, SameSite=Lax, Path=/, host-only; production uses Secure and
+  `__Host-` names. Logout revokes before clearing cookies/reporting completion.
+- Signed double-submit CSRF binds to an anonymous nonce before login and the session
+  hash afterward. Mutations require exact Origin plus X-CSRF-Token. Production auth
+  requires HTTPS WEB_ORIGIN and stable server-only CSRF_SECRET. Local development
+  can use an ephemeral key. Auth endpoints and protected reads are no-store.
+- Login has process-local account/transport-IP limits. Forwarded IPs are not trusted
+  automatically. Auth connects lazily using existing backend configuration and verifies
+  indexes read-only; missing config/storage fails closed. No HTTP DDL is performed.
+  Owned connections close on shutdown. Added cookie-parser, csrf-csrf and cookie
+  parser types with exact pins and lockfile updates; no competing auth framework.
+- The existing form preserves styling, layout, theme controls and local validation;
+  submits through the unchanged Next rewrite, confirms authentication, and navigates
+  to a minimal Server Component `/dashboard` shell. Server-side session validation
+  gates that page; logout is functional. No trading screens or services were added.
+- Final checks passed on 26 November 2026: workspace typecheck, zero-warning ESLint,
+  149 tests across 22 files (including 23 Stage 3 HTTP integration cases and lazy
+  runtime/read-only readiness tests), production build, formatting and whitespace
+  checks. `/` and `/login` remain static; `/dashboard` is dynamic and authenticated.
+  First HTTP test failures came from constructing POST requests
+  before the test agent obtained CSRF cookies; corrected that ordering. Type checks
+  found a test model-union call and missing ESM extension; corrected both.
+- First Playwright run had four request-level passes; Chromium was absent from its
+  default cache. Reused existing ignored local browser cache. The next run passed
+  20 browser checks, including real desktop/mobile login/logout; four failures were
+  obsolete UI-only expectations or an ambiguous Next route-announcer selector.
+  Corrected those tests; final compiled-app Chromium run passed all 24 checks across
+  desktop/mobile, including real login/logout through Next, cookie forwarding,
+  revocation replay, protected navigation, keyboard focus, light/dark/system themes,
+  branding and no-overflow checks. Screenshots reviewed at 1440px dark, 768px dark,
+  390px light and 360px light; automation covers both themes at all these widths.
+- Test databases are generated and loopback-only on a disposable replica set;
+  Playwright seeds a synthetic Admin and never loads app `.env`. Compiled-app browser
+  checks use compiled Express/Next with HTTP test cookies; HTTPS production cookie
+  attributes are verified separately. No real Admin credentials, account/session
+  writes in Atlas, production connection, approved specification edits, commit or
+  push are part of this task. Prior milestone results below remain historical.
+  Test-owned servers/connections were stopped, ports 3000/4000 left unused, and an
+  unrelated pre-existing MongoDB process preserved. No remote CI or cloud HTTPS
+  deployment was verified. Firefox, Safari and real-device testing were not run.
+
+## Prior Authentication Stage 2 — 26 November 2026
+
+- Added connection-scoped identity models and explicit index preparation. User email
+  is globally unique after trim/lowercase normalization; roles are ADMIN/MEMBER and
+  account states ACTIVE/DISABLED per the approved request, superseding the older
+  INVITED user state. Family retains baseline creator/status fields and uses its
+  ObjectId as the unique workspace identifier. Display name is required.
+- Password/token hashes are excluded from default queries and document serialization;
+  `toPublicUser` applies an explicit DTO allowlist for selected/lean records. Sessions
+  and invitations have unique hash indexes and expiry TTL indexes plus synchronous
+  validity helpers. No session or invitation workflow is connected.
+- `pnpm admin:bootstrap` builds the API dependency graph and loads the existing
+  backend environment file. It requires development mode and target, an interactive
+  terminal and hidden matching password entries, rejects arguments/production,
+  prepares identity DDL explicitly, and writes the first Family/Admin transactionally.
+  A permanent unique Family marker arbitrates concurrent attempts. Existing identity
+  data, missing indexes or unavailable transactions fail closed. Email verification
+  remains unset. Errors are sanitized and owned connections close.
+- Added Argon2id (64 MiB, three passes, parallelism one, random salt), hidden Inquirer
+  prompts, and a disposable MongoDB replica-set test harness. Manifests and pnpm
+  lockfile changed together; only Argon2's reviewed native install step was added to
+  the build allowlist. `db:ping` now builds its contracts dependency too. No global
+  tools were changed.
+- Eight real MongoDB integration cases passed, including four concurrent bootstrap
+  attempts yielding exactly one linked Family/Admin, rollback after User-write
+  failure followed by safe retry, global email uniqueness, token uniqueness and
+  missing-index refusal. Final checks passed: workspace typecheck, ESLint with no
+  warnings, 116 tests across 19 files (including all eight integration cases),
+  production build, formatting and whitespace diff checks. Public pages remain
+  static. Playwright was not rerun because no UI, proxy or theme behavior changed;
+  earlier browser evidence remains explicitly historical. Remote CI was not run.
+- Earlier checks exposed a connection-model identity issue and two strict typing
+  issues; corrected them. The first full test run had 105 passing tests, the old
+  model assertion failure, and eight integration cases skipped because the initial
+  Windows binary download exceeded the three-minute hook timeout. Increased the
+  bounded first-run timeout to ten minutes; the isolated integration retry and final
+  full suite passed. A later test-only lint import issue was fixed before the final
+  clean lint run.
+- Integration tests use generated test database names on a test-owned loopback
+  MongoDB 8.2.6 replica set, never the application environment file or Atlas. Only
+  synthetic test records were written. No actual development/production account,
+  collection or index was provisioned during this milestone. No approved
+  specification, public page, backend HTTP behavior, commit or push was changed.
+  Test-owned MongoDB processes were stopped; an unrelated existing process was
+  preserved. Environment files were not edited and the local API environment remains
+  ignored/untracked. The root `admin:bootstrap` command was not invoked against Atlas.
+
+## Prior MongoDB diagnostic verification — 26 November 2026
+
+- Sanitized `apps/api/.env.example`: its MongoDB password and hostname are placeholders;
+  the requested database is `advanced_darvas_dev`. The credential-bearing local
+  example edit was never staged or committed.
+- Preserved the existing connection value in ignored `apps/api/.env`, normalized
+  the URI database path, and set `MONGODB_DB_NAME=advanced_darvas_dev`. Existing
+  Node/tsx environment-file loading conventions remain in use. No credentials or
+  complete URI are stored in this status record.
+- Added `pnpm db:ping`, which builds the existing database package and reuses its
+  configuration, connection, and shutdown utilities. It rejects unsupported modes,
+  placeholders, invalid URIs, and database mismatches before connecting; sends only
+  `{ ping: 1 }` with a command timeout; and closes the owned connection.
+- **Latest live result: passed.** On the latest user-requested retry on 26 November
+  2026, `pnpm db:ping` exited successfully against `advanced_darvas_dev`. The check
+  closed its owned connection after `{ ping: 1 }`. No database writes or environment
+  edits were performed. Only this status record changed; application checks were
+  not rerun for this retry. Status formatting and whitespace checks passed.
+- **Earlier attempts: failed, including the first local credential-update retry.**
+  The ordinary command returned a sanitized failure.
+  A guarded diagnostic retry identified **AUTHENTICATION_FAILED**. A read-only DNS
+  check confirmed Atlas supplies the expected admin authentication source.
+  The latest successful retry above supersedes this connectivity blocker.
+- The user previously confirmed a local credential update. `pnpm db:ping` and a guarded
+  diagnostic retry still failed with `AUTHENTICATION_FAILED`. Safe checks confirmed
+  that the URI and database name match the development target, the loaded values
+  match the local file, the expected development username is present, and Atlas DNS
+  supplies the admin authentication source. No raw error, hostname, or credential
+  was printed. Local password and URI-encoding verification was recommended at
+  that point. This task did not rotate Atlas credentials.
+  Do not put real values back into the tracked example or paste them into chat.
+- No database records, collections, indexes, users, or accounts were created,
+  modified, or deleted. Application startup still does not connect automatically.
+- Checks actually run: targeted database tests passed (20 tests); full Vitest suite
+  passed (56 tests across 10 files); root typecheck, ESLint, and production build
+  passed, as did formatting and whitespace diff checks. An initial type-only import lint error in the new test was corrected and
+  ESLint reran successfully.
+- Playwright was not rerun for this CLI/configuration change. The prior login UI
+  browser results below remain historical evidence, not a new browser run.
+- The Landing Page, Login Page, four approved specifications, backend request
+  handling, dependency graph, and lockfile are unchanged. No packages were installed,
+  no application server was started/stopped, and no commit or push was performed.
+
+The first credential-update follow-up reran the guarded ping and sanitized diagnostics
+only; application code was unchanged and the earlier 56-test/typecheck/lint/build
+results above were not rerun for that follow-up.
+
+The earlier approved configuration review on **26 November 2026** restored MongoDB
+placeholders in the tracked example again and preserved the current local `.env`
+byte-for-byte. Verified that the local file is Git-ignored and untracked, and both
+database settings target `advanced_darvas_dev`. Reused the existing `pnpm db:ping`;
+no duplicate command or dependency was added. The live command failed and a sanitized
+diagnostic confirmed `AUTHENTICATION_FAILED`; connectivity was blocked at that time.
+Workspace typecheck and all 20 database tests across two files passed on
+this review. Formatting and whitespace checks also passed. Full application tests,
+lint, build, and browser tests were not rerun for this example/status-only follow-up;
+their earlier results above remain historical. No data writes, UI/specification
+changes, commits, or pushes were performed.
+
+## Prior login application verification
 
 Verified on **26 November 2026 (Asia/Kolkata)** for the login UI milestone:
 
@@ -192,27 +403,35 @@ secrets. Local ignored tools are optional; fresh clones should follow the README
 
 ## Pending implementation
 
-| Area                        | State                                                                                                           |
-| --------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| Invite-only authentication  | Not implemented: credentials, invitations, sessions, authorization, and CSRF protection                         |
-| Persistence                 | Atlas connectivity not exercised; collections, indexes, migrations, and tenancy adapters not implemented        |
-| Market-data imports         | No CSV/XLSX parsing, preview, commit, resumable jobs, revision processing, or trading-session calendar          |
-| Screening and strategies    | No DMA/CAR/Darvas/suitability algorithms, eligibility calculations, or golden parity tests                      |
-| Private application screens | Dashboard, screener, watchlists, stock detail, portfolio, and trade routes not implemented; `/login` is UI only |
-| Portfolio accounting        | No confirmed trade recording, positions, targets, allocation ledger, or corrections                             |
-| Notifications               | No delivery, outbox processing, Resend integration, or scheduled digest                                         |
-| Operations                  | No Vercel/Render deployment, production configuration, backup/restore verification, or operational monitoring   |
-| Later research              | Backtests and strategy comparisons remain deferred                                                              |
+| Area                        | State                                                                                                                                      |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| Invite-only authentication  | Login, session validation, logout and CSRF implemented; invitation and recovery workflows and business-resource authorization pending      |
+| Persistence                 | Identity models/repositories implemented; development Admin bootstrap confirmed by user; non-identity persistence pending                  |
+| Market-data imports         | No CSV/XLSX parsing, preview, commit, resumable jobs, revision processing, or trading-session calendar                                     |
+| Screening and strategies    | No DMA/CAR/Darvas/suitability algorithms, eligibility calculations, or golden parity tests                                                 |
+| Private application screens | Protected minimal workspace shell exists at `/dashboard`; full dashboard, screener, watchlists, stock detail, portfolio and trades pending |
+| Portfolio accounting        | No confirmed trade recording, positions, targets, allocation ledger, or corrections                                                        |
+| Notifications               | No delivery, outbox processing, Resend integration, or scheduled digest                                                                    |
+| Operations                  | No Vercel/Render deployment, production configuration, backup/restore verification, or operational monitoring                              |
+| Later research              | Backtests and strategy comparisons remain deferred                                                                                         |
 
 Live market-data feeds and broker order execution are not part of the current
 approved milestone. Do not introduce them implicitly.
 
 ## Open decisions and risks
 
-- Authentication is not an existing security boundary; this release must not be
-  represented as a production-ready private trading application.
-- Resolve the database document's stated 25 collections versus its 26-item
-  inventory before creating models.
+- Development Atlas connectivity was verified by ping; the user subsequently
+  confirmed successful workspace/Admin bootstrap. Stage 3 uses isolated tests only. Rotation of credentials
+  previously exposed in the example/output has not been independently confirmed;
+  this task did not change Atlas users or passwords.
+
+- Login/session protection exists, but invitation/recovery, business tenancy and
+  production deployment hardening are incomplete. Do not represent this release as
+  a production-ready private trading application. Process-local limits reset on
+  restart and can share proxy IPs; Vercel/Render TLS and trust topology remain unverified.
+- The database document's stated 25 collections versus its 26-item inventory remains
+  inconsistent. Stage 2 adds no collection beyond its four named identity collections;
+  the technical bootstrap marker resides on Family.
 - Reconcile older PRD partial-exit/cash passages with the later full-position-sale
   and no-shared-cash designs before portfolio implementation.
 - Verify CAR anchor ties, source adjustment provenance, decimal rounding/tick-size
@@ -224,22 +443,30 @@ approved milestone. Do not introduce them implicitly.
 
 ## Recommended next milestone
 
-Agree on the next implementation scope. The current recommendation is invite-only
-authentication and tenancy: invitation UI, secure session lifecycle,
-ownership boundaries, CSRF strategy, and corresponding tests. This recommendation
+Agree on the next implementation scope. The current recommendation is invitation
+lifecycle and business-resource tenancy, plus production proxy/TLS verification
+before deployment. Existing session/CSRF work does not authorize these features. This recommendation
 does not authorize starting that work.
 
 ## Recent progress
 
-| Date (Asia/Kolkata) | Update                                                                                                                                   |
-| ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| 25 November 2026    | Monorepo scaffold implemented and verified; `dev` created from `main` and scaffold pushed                                                |
-| 26 November 2026    | Approved Stitch landing page implemented; application checks and 8 browser tests passed                                                  |
-| 26 November 2026    | Added this living status record and agent instructions to maintain it with project updates                                               |
-| 26 November 2026    | Landing page and project guidance committed and pushed to `origin/dev` in `aaebdce`; `main` left unchanged                               |
-| 26 November 2026    | Login UI implemented and verified locally: 37 tests and 16 browser checks passed; no dependencies, commit, or push                       |
-| 26 November 2026    | Login QA: fixed input boundary contrast, added missing-password/keyboard/design checks; 38 tests and 20 production browser checks passed |
-| 26 November 2026    | Login milestone committed and pushed to `origin/dev` as `fb7995c`; remote hash verified and `main` unchanged                             |
+| Date (Asia/Kolkata) | Update                                                                                                                                                                            |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 25 November 2026    | Monorepo scaffold implemented and verified; `dev` created from `main` and scaffold pushed                                                                                         |
+| 26 November 2026    | Approved Stitch landing page implemented; application checks and 8 browser tests passed                                                                                           |
+| 26 November 2026    | Added this living status record and agent instructions to maintain it with project updates                                                                                        |
+| 26 November 2026    | Landing page and project guidance committed and pushed to `origin/dev` in `aaebdce`; `main` left unchanged                                                                        |
+| 26 November 2026    | Login UI implemented and verified locally: 37 tests and 16 browser checks passed; no dependencies, commit, or push                                                                |
+| 26 November 2026    | Login QA: fixed input boundary contrast, added missing-password/keyboard/design checks; 38 tests and 20 production browser checks passed                                          |
+| 26 November 2026    | Login milestone committed and pushed to `origin/dev` as `fb7995c`; remote hash verified and `main` unchanged                                                                      |
+| 26 November 2026    | Sanitized Atlas example, added guarded read-only db:ping; 56 tests/typecheck/lint/build passed; live ping rejected authentication, credentials pending                            |
+| 26 November 2026    | Retried development ping after confirmed local credential update; Atlas still rejected authentication; safe configuration checks passed                                           |
+| 26 November 2026    | Restored example placeholders while preserving local env; existing ping still fails authentication; workspace typecheck and 20 database tests passed                              |
+| 26 November 2026    | User-requested Atlas retry succeeded with pnpm db:ping against advanced_darvas_dev; connection closed, no database writes or environment edits                                    |
+| 26 November 2026    | Authentication Stage 2 models and secure dev bootstrap CLI implemented; 116 tests including atomicity/concurrency passed, typecheck/lint/build verified; no Atlas writes or push  |
+| 26 November 2026    | Stage 3 real login/session/logout and protected shell implemented; 149 tests, 24 compiled browser checks, typecheck/lint/build passed; no real-account tests, commit or push      |
+| 26 November 2026    | Fixed production E2E build/start origin mismatch; 149 tests and 24 compiled browser checks passed on 3001/4001; development services preserved, no commit or push                 |
+| 26 November 2026    | Added server-verified /login redirect for authenticated users; 149 tests and 24 compiled browser checks passed, including no-JS and revoked-cookie regressions; no commit or push |
 
 Keep this history concise. Replace stale current-state statements when work ships;
 retain only useful milestone evidence and unresolved decisions. Never record secrets

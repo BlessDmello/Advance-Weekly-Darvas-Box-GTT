@@ -1,10 +1,12 @@
 import { createApp } from './app.js';
 import { parseEnvironment } from './config/env.js';
 import { createLogger } from './config/logger.js';
+import { createAuthRuntime } from './modules/auth/runtime.js';
 
 const environment = parseEnvironment(process.env);
 const logger = createLogger(environment.LOG_LEVEL);
-const server = createApp(environment).listen(environment.PORT, environment.HOST, () => {
+const auth = createAuthRuntime(process.env);
+const server = createApp(environment, auth).listen(environment.PORT, environment.HOST, () => {
   logger.info({ port: environment.PORT, host: environment.HOST }, 'API listening');
 });
 
@@ -18,8 +20,14 @@ function shutdown(signal: string) {
   if (shuttingDown) return;
   shuttingDown = true;
   logger.info({ signal }, 'API shutting down');
-  server.close((error) => {
+  server.close(async (error) => {
     if (error) logger.error('API shutdown failed');
+    try {
+      await auth.close();
+    } catch {
+      logger.error('Database shutdown failed');
+      process.exit(1);
+    }
     process.exit(error ? 1 : 0);
   });
   setTimeout(() => process.exit(1), 10_000).unref();

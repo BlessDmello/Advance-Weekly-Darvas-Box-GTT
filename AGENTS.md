@@ -34,14 +34,17 @@ swing-trading management application. It is a pnpm modular monolith.
 Phase 1 scaffolding, the public landing page at `/`, and the login UI at `/login`
 are implemented. Public pages share the brand, palette, theme provider, local
 Geist/Inter fonts, and static chart illustration. Express provides a health API;
-shared packages, tests, and CI are established. Invite-only authentication is a
-future feature, not an existing access-control boundary. Do not describe this
-release as production-ready.
+shared packages, tests, and CI are established. Identity models and a development-only
+first-Admin CLI exist. Real email/password login, MongoDB sessions, logout, CSRF
+and a minimal protected `/dashboard` destination are connected. Invitation workflows
+and business-resource authorization remain deferred. Do not describe this release
+as production-ready or the workspace shell as a completed trading dashboard.
 
 The public landing and login pages may show fixed mock stock values only inside an explicitly
 labeled "Illustrative Preview — Not Live Market Data" illustration. These values are
 presentation examples, never golden-test inputs, current prices, performance claims,
-or computed signals. Public pages must not fetch API or market data. Landing Sign In
+or computed signals. The landing page must not fetch API or market data. Login may
+call only the same-origin authentication endpoints; previews never fetch data. Landing Sign In
 actions navigate to `/login`.
 
 Approved landing references are in Stitch project `7871198770128109512`: desktop
@@ -58,14 +61,20 @@ The references only supply dark variants; light mode uses the existing public pa
 Do not copy design-review controls, prefilled credentials, fake authentication or
 recovery confirmations, live-feed badges, fabricated session IDs, or security claims.
 
-The login form performs local required/email-format validation only. Valid submission
-displays the authentication-not-connected message without a request, artificial
-loading state, session, or redirect. Remember Me is memory-only UI state; never
-persist passwords or credentials. Keep native form controls disabled until hydration
+The login form performs local required/email-format validation and submits through
+the same-origin auth API with CSRF protection. It confirms `/auth/me` before
+navigation to `/dashboard`, clears attempted passwords, preserves email on failure,
+and shows loading only during real requests. Never persist passwords or place tokens
+in localStorage/sessionStorage; session tokens belong only in HttpOnly cookies.
+Keep native form controls disabled until hydration
 so credentials cannot submit through a fallback browser navigation. Forgot Password
 is disabled with a visible Coming soon explanation; no reset or public signup route exists.
+The dynamic `/login` Server Component verifies existing sessions through `/auth/me`
+and redirects authenticated visitors to `/dashboard` before rendering the form,
+including without JavaScript. Cookie presence alone must not trigger a redirect.
+Invalid/revoked sessions or unavailable validation leave the public form accessible.
 
-Implement only the user's requested milestone. Authentication, collections,
+Implement only the user's requested milestone. Invitations, business-resource authorization, non-identity collections,
 screening, DMA/CAR/Darvas calculations, portfolio accounting, imports, notification
 delivery, scheduled jobs, and cloud deployment remain deferred until requested.
 Existing scaffold and landing-page maintenance do not require reapproving Phase 1.
@@ -99,15 +108,15 @@ Do not invent a trading rule or block unrelated scaffold maintenance over it.
 
 ## Architecture and dependency boundaries
 
-| Path                     | Responsibility                                                              |
-| ------------------------ | --------------------------------------------------------------------------- |
-| `apps/web`               | Next.js App Router, React, Tailwind, application-owned shadcn/ui components |
-| `apps/api`               | Express REST API, configuration, middleware, application composition        |
-| `packages/contracts`     | Browser-safe Zod schemas, JSON DTOs, inferred TypeScript types              |
-| `packages/strategy-core` | Framework-independent, deterministic strategy calculations when authorized  |
-| `packages/database`      | Explicit Mongoose connection lifecycle; future persistence adapters         |
-| `packages/test-fixtures` | Development-only verified golden data and provenance                        |
-| `tests/e2e`              | Playwright browser smoke tests                                              |
+| Path                     | Responsibility                                                               |
+| ------------------------ | ---------------------------------------------------------------------------- |
+| `apps/web`               | Next.js App Router, React, Tailwind, application-owned shadcn/ui components  |
+| `apps/api`               | Express REST API, configuration, middleware, application composition         |
+| `packages/contracts`     | Browser-safe Zod schemas, JSON DTOs, inferred TypeScript types               |
+| `packages/strategy-core` | Framework-independent, deterministic strategy calculations when authorized   |
+| `packages/database`      | Explicit connection lifecycle, identity models, indexes and atomic bootstrap |
+| `packages/test-fixtures` | Development-only verified golden data and provenance                         |
+| `tests/e2e`              | Playwright browser smoke tests                                               |
 
 - Web may consume contracts; never import API, Mongoose, database, or fixture code
   into the frontend. Keep secrets out of client bundles.
@@ -167,18 +176,20 @@ and `pnpm-lock.yaml`. Check those files rather than assuming a global tool versi
 
 Run from the repository root:
 
-| Command                             | Purpose                                                        |
-| ----------------------------------- | -------------------------------------------------------------- |
-| `pnpm install --frozen-lockfile`    | Install the existing dependency graph reproducibly             |
-| `pnpm dev`                          | Build shared packages, then watch packages and run both apps   |
-| `pnpm dev:web` / `pnpm dev:api`     | Build packages and start one application                       |
-| `pnpm build:packages`               | Emit shared JavaScript and declarations                        |
-| `pnpm typecheck`                    | Check package/app types plus test and tool configuration       |
-| `pnpm lint`                         | ESLint with zero allowed warnings                              |
-| `pnpm test`                         | Vitest, React Testing Library, and Supertest checks            |
-| `pnpm build`                        | Production builds in dependency order                          |
-| `pnpm test:e2e`                     | Desktop/mobile Chromium smoke tests with managed local servers |
-| `pnpm format` / `pnpm format:check` | Format or verify implementation files                          |
+| Command                             | Purpose                                                               |
+| ----------------------------------- | --------------------------------------------------------------------- |
+| `pnpm install --frozen-lockfile`    | Install the existing dependency graph reproducibly                    |
+| `pnpm dev`                          | Build shared packages, then watch packages and run both apps          |
+| `pnpm dev:web` / `pnpm dev:api`     | Build packages and start one application                              |
+| `pnpm build:packages`               | Emit shared JavaScript and declarations                               |
+| `pnpm db:ping`                      | Explicit read-only Atlas connectivity check for `advanced_darvas_dev` |
+| `pnpm admin:bootstrap`              | Interactive one-time development Family/Admin initialization          |
+| `pnpm typecheck`                    | Check package/app types plus test and tool configuration              |
+| `pnpm lint`                         | ESLint with zero allowed warnings                                     |
+| `pnpm test`                         | Vitest, React Testing Library, and Supertest checks                   |
+| `pnpm build`                        | Production builds in dependency order                                 |
+| `pnpm test:e2e`                     | Desktop/mobile Chromium smoke tests with managed local servers        |
+| `pnpm format` / `pnpm format:check` | Format or verify implementation files                                 |
 
 For intentional dependency updates, update manifests and the pnpm lockfile together,
 verify peer/engine compatibility, and review install-script policy changes. Do not
@@ -199,11 +210,62 @@ Frontend uses port 3000; Express uses port 4000. Browser calls use relative
 
 - Web loads `apps/web/.env.local`; API loads `apps/api/.env`. Root `.env.example`
   is a reference, not an environment loader. Commit examples only.
-- Current defaults work without actual environment files. Do not require future
-  MongoDB, session, or Resend credentials for scaffold startup or isolated tests.
+- Current defaults keep startup/health functional without actual environment files.
+  Auth connects lazily and returns a sanitized 503 when unavailable. Do not require
+  Atlas or Resend credentials for isolated tests. Database index readiness is
+  verified read-only on first real auth use; HTTP requests never provision indexes.
 - Database imports must not open connections. Connect explicitly, close owned
-  connections on shutdown, and keep automatic collection/index creation disabled
-  until the persistence milestone defines it.
+  connections on shutdown, and keep automatic collection/index creation disabled.
+  Identity DDL is explicit through `prepareAuthStorage`, used by the bootstrap CLI
+  and disposable integration tests. Never use `syncIndexes()` to drop indexes.
+- `pnpm db:ping` explicitly loads `apps/api/.env` with Node's environment-file loader
+  and reuses the database connection utility. It permits development/test mode only,
+  requires `advanced_darvas_dev` in both the URI path and `MONGODB_DB_NAME`, rejects
+  placeholders, sends only the `ping` command, and closes the owned connection.
+  Keep driver errors and complete URIs out of diagnostic output. This command does
+  not create records, models, collections, indexes, or accounts and is never run by CI.
+- `pnpm admin:bootstrap` builds the API dependency graph, loads `apps/api/.env`, and
+  requires an interactive terminal, no arguments, explicit development mode, and
+  `advanced_darvas_dev` in both database settings. Production is refused without a
+  bypass flag; it needs separately approved implementation. Never invoke the live
+  bootstrap for testing or ask for its password in chat.
+- Bootstrap creates only the first Family/Admin in a transaction. A permanent,
+  uniquely indexed Family marker arbitrates concurrent attempts; never remove or
+  expire it. Pre-existing identity data blocks initialization. Unsupported
+  transactions or missing indexes fail closed; retries never overwrite accounts.
+- Email identity is trimmed/lowercase and globally unique; dots/plus tags remain.
+  User states are ACTIVE/DISABLED per the approved Stage 2 request, superseding the
+  older INVITED user state. Family `_id` is the workspace identifier. CLI creation
+  leaves `emailVerifiedAt` unset. Roles do not confer private portfolio ownership.
+- Passwords use Argon2id (64 MiB, three passes, parallelism one, random 16-byte salt).
+  CLI entry is hidden with reveal disabled; no password arguments, persistence or
+  logging. Secret fields use default query exclusion and serialization redaction;
+  always use `toPublicUser`/the DTO allowlist, including for explicitly selected lean
+  records. Token hashes are SHA-256 of opaque 32-byte random tokens, never passwords.
+- Session/invitation validity must check expiry and revocation/consumption at use
+  time. TTL indexes are asynchronous cleanup, not authorization. Sessions use opaque
+  32-byte tokens with SHA-256 hashes in MongoDB, active User/Family checks and fresh
+  browser-session tokens at login. Normal absolute lifetime is eight hours; Remember
+  Me is seven days with a persistent cookie. Logout revokes before reporting success.
+- Auth cookies are HttpOnly, SameSite=Lax, Path=/, host-only, and Secure with `__Host-`
+  names in production. Production auth requires HTTPS WEB_ORIGIN and a stable random
+  server-only CSRF_SECRET (at least 43 characters). Development uses an ephemeral
+  signing secret if absent. Do not weaken production flags for local browser tests.
+- GET `/api/v1/auth/csrf` is the approved Stage 3 support endpoint. Signed double-submit
+  CSRF tokens bind to an anonymous nonce before login and session hash afterward.
+  Mutations require exact configured Origin plus X-CSRF-Token; no CORS credential
+  bypass or forwarded-host-derived origin. CSRF tokens may be returned to memory;
+  session tokens must never appear in JSON, URLs or logs. Keep request logging redacted.
+- Auth uses the API Design's `{data}`/`{error}` envelopes; the legacy health/scaffold
+  success discriminator stays intact. Login input validation is distinct from new
+  password policy; unknown accounts receive comparable Argon2 verification work.
+  Disabled accounts/families receive the same generic credential error.
+- Login limits are process-local, per normalized account plus transport-IP backstop.
+  Keep proxy trust disabled unless topology is explicitly verified. Behind Next,
+  IP backstops can be shared; these limits are not a distributed production defense.
+- The workspace Server Component forwards cookies to Express using a server-only
+  fixed API origin and no-store fetch. Never grant access based on cookie existence
+  or a client-side guard. Failed backend validation renders no private user content.
 - Never expose server configuration through `NEXT_PUBLIC_*` or log credentials,
   raw environment objects, request bodies, cookies, or private financial records.
 - Use dedicated development/test databases for authorized integration work. Do
@@ -221,6 +283,21 @@ Frontend uses port 3000; Express uses port 4000. Browser calls use relative
   Documentation-only changes normally need formatting and diff checks, not app tests.
 - Add or update meaningful tests for changed behavior. Do not create dummy checks,
   empty success scripts, invented golden data, or unnecessary implementation mirrors.
+- Database integration tests start a test-owned loopback MongoDB replica set using
+  `mongodb-memory-server-core` and pinned MongoDB 8.2.6. First use downloads and
+  checksum-verifies a binary under ignored `node_modules/.cache/mongodb-binaries`.
+  They generate `advanced_darvas_test_<uuid>` databases and never read app `.env`
+  or Atlas settings. Keep ownership/loopback guards before cleanup; do not replace
+  the harness URI with a development/production URI or silently skip security tests.
+- Playwright uses `test:auth-server`, a disposable replica set and synthetic account.
+  Its helper never loads app `.env` and must not be used for manual development
+  sign-in. Compiled-app tests use compiled Express code with HTTP test cookie flags;
+  secure production attributes are tested separately. Optional E2E_WEB_PORT and
+  E2E_API_PORT keep default 3000/4000; preserve unrelated processes. Local browser
+  caches may be selected through PLAYWRIGHT_BROWSERS_PATH without committing paths.
+- Production Playwright startup rebuilds the frontend under its selected
+  API_INTERNAL_ORIGIN before `next start`. Keep build/start origins identical:
+  changing only startup environment does not replace compiled rewrite destinations.
 - For UI/proxy/theme changes, run Playwright, review desktop/mobile behavior, and
   check for overflow. Preserve light/dark/system themes and emerald visual tokens.
   Public-page checks include 360/390px mobile, tablet, and 1440px desktop, the static

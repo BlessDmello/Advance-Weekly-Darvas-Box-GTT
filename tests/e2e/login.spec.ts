@@ -14,7 +14,7 @@ test('opens login from landing Sign In actions and navigates home', async ({ pag
   await expect(page).toHaveURL(`${baseURL}/`);
 });
 
-test('validates locally and never authenticates, sends, or stores credentials', async ({
+test('validates locally and shows a generic failed login without external requests or credential storage', async ({
   page,
   baseURL,
 }) => {
@@ -22,11 +22,7 @@ test('validates locally and never authenticates, sends, or stores credentials', 
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
   page.on('request', (request) => {
-    if (
-      request.method() !== 'GET' ||
-      /\/api\//.test(request.url()) ||
-      new URL(request.url()).origin !== new URL(baseURL!).origin
-    )
+    if (new URL(request.url()).origin !== new URL(baseURL!).origin)
       unsafeRequests.push(request.url());
   });
   await page.goto('/login');
@@ -58,19 +54,22 @@ test('validates locally and never authenticates, sends, or stores credentials', 
   );
   await email.fill('preview@example.com');
   await password.press('Enter');
-  await expect(page.getByRole('status')).toHaveText(
-    'Sign-in functionality will be available when authentication is connected.',
+  await expect(page.getByRole('form', { name: 'Sign in' }).getByRole('alert')).toHaveText(
+    'Email or password is incorrect.',
   );
+  await expect(password).toHaveValue('');
   await expect(page).toHaveURL(/\/login$/);
   await expect(submit).toBeEnabled();
   await expect(email).toHaveValue('preview@example.com');
-  await expect(password).toHaveValue('ui-only-passphrase');
+  await expect(password).toHaveValue('');
   const storedValues = await page.evaluate(() =>
     JSON.stringify({ local: { ...localStorage }, session: { ...sessionStorage } }),
   );
   expect(storedValues).not.toContain('ui-only-passphrase');
   expect(storedValues).not.toContain('preview@example.com');
-  expect(await page.context().cookies()).toEqual([]);
+  expect((await page.context().cookies()).some((cookie) => cookie.name.endsWith('_session'))).toBe(
+    false,
+  );
   expect(unsafeRequests).toEqual([]);
   expect(errors).toEqual([]);
 });
@@ -136,7 +135,7 @@ test('keeps native credential submission disabled without JavaScript', async ({
     // Playwright's text engine intentionally excludes the noscript element itself.
     await expect(page.locator('noscript p')).toBeVisible();
     await expect(page.locator('noscript p')).toHaveText(
-      'JavaScript is required for this UI preview. Sign-in is not available yet.',
+      'JavaScript is required to sign in. No credentials are submitted without it.',
     );
   } finally {
     await context.close();
@@ -206,8 +205,8 @@ test('supports the complete form by keyboard with visible focus', async ({ page,
       fullPage: true,
     });
     await page.keyboard.press('Enter');
-    await expect(page.getByRole('status')).toHaveText(
-      'Sign-in functionality will be available when authentication is connected.',
+    await expect(page.getByRole('form', { name: 'Sign in' }).getByRole('alert')).toHaveText(
+      'Email or password is incorrect.',
     );
     await page.getByRole('link', { name: 'Back to Home' }).focus();
     await page.keyboard.press('Enter');

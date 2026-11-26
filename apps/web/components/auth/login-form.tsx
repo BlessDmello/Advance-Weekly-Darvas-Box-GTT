@@ -5,6 +5,8 @@ import type { FormEvent } from 'react';
 import { Eye, EyeOff, LockKeyhole, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import styles from './login.module.css';
+import { useRouter } from 'next/navigation';
+import { AuthRequestError, signIn } from '@/lib/api/auth';
 
 type Field = 'email' | 'password';
 type Errors = Partial<Record<Field, string>>;
@@ -18,37 +20,56 @@ export function LoginForm() {
   const [errors, setErrors] = useState<Errors>({});
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
+  const [feedback, setFeedback] = useState('');
+  const [pending, setPending] = useState(false);
+  const router = useRouter();
   // Prevent native credential submission before hydration or when JavaScript is unavailable.
   const interactive = useSyncExternalStore(subscribe, clientReady, serverReady);
 
   function clearFeedback(field: Field) {
     setErrors((previous) => ({ ...previous, [field]: undefined }));
-    setSubmitted(false);
+    setFeedback('');
   }
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const email = emailRef.current;
     const password = passwordRef.current;
-    if (!email || !password) return;
+    if (!email || !password || pending) return;
     const nextErrors: Errors = {};
     if (!email.value.trim()) nextErrors.email = 'Email address is required.';
     else if (email.validity.typeMismatch) nextErrors.email = 'Enter a valid email address.';
     if (!password.value) nextErrors.password = 'Password is required.';
     setErrors(nextErrors);
-    setSubmitted(Object.keys(nextErrors).length === 0);
     if (nextErrors.email) email.focus();
     else if (nextErrors.password) password.focus();
+    if (Object.keys(nextErrors).length) return;
+    setPending(true);
+    setFeedback('');
+    try {
+      await signIn(email.value, password.value, rememberMe);
+      password.value = '';
+      router.replace('/dashboard');
+      router.refresh();
+    } catch (error) {
+      setFeedback(
+        error instanceof AuthRequestError
+          ? error.message
+          : 'Sign-in is temporarily unavailable. Please try again.',
+      );
+    } finally {
+      password.value = '';
+      setPending(false);
+    }
   }
 
   return (
     <form noValidate onSubmit={handleSubmit} aria-label="Sign in" className={styles.form}>
       <p id="login-availability" className={styles.availability}>
-        Sign-in is not connected yet. This form does not send your credentials.
+        Sign in with your family workspace account.
       </p>
       <fieldset
-        disabled={!interactive}
+        disabled={!interactive || pending}
         className={styles.fields}
         aria-describedby="login-availability"
       >
@@ -131,19 +152,19 @@ export function LoginForm() {
           </div>
         </div>
         <p id="remember-note" className={styles.rememberNote}>
-          Remember Me will take effect when authentication is connected.
+          Keep me signed in for up to seven days.
         </p>
-        <Button type="submit" className={styles.submit}>
+        <Button type="submit" className={styles.submit} aria-busy={pending}>
           <LockKeyhole aria-hidden="true" />
-          Sign In to Workspace
+          {pending ? 'Signing in…' : 'Sign In to Workspace'}
         </Button>
       </fieldset>
       <noscript>
-        <p>JavaScript is required for this UI preview. Sign-in is not available yet.</p>
+        <p>JavaScript is required to sign in. No credentials are submitted without it.</p>
       </noscript>
-      {submitted && (
-        <p role="status" className={styles.notice}>
-          Sign-in functionality will be available when authentication is connected.
+      {feedback && (
+        <p role="alert" className={styles.notice}>
+          {feedback}
         </p>
       )}
     </form>

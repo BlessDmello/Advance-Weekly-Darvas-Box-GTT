@@ -6,7 +6,12 @@ export function createLogger(level: ApiEnvironment['LOG_LEVEL']) {
     level,
     base: { service: 'advanced-darvas-api' },
     redact: {
-      paths: ['req.headers.authorization', 'req.headers.cookie', 'res.headers["set-cookie"]'],
+      paths: [
+        'req.headers.authorization',
+        'req.headers.cookie',
+        'req.headers["x-csrf-token"]',
+        'res.headers["set-cookie"]',
+      ],
       censor: '[REDACTED]',
     },
   });

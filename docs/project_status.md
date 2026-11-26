@@ -1,7 +1,7 @@
 # Advanced Darvas Box — Project Status
 
 - **Last updated:** 26 November 2026 (Asia/Kolkata)
-- **Current milestone:** Public landing page implemented and verified locally
+- **Current milestone:** Public landing page implemented, verified, and delivered to `dev`
 - **Overall state:** Frontend foundation complete; business features and deployment pending
 
 This is the living implementation-status record. Requirements remain in the four
@@ -78,13 +78,19 @@ On **26 November 2026**, added this tracker, required same-task status updates i
 hashes remained unchanged. Application tests were not rerun for this documentation-only
 update; their most recent verified results are recorded above.
 
+The subsequent Git delivery task reran the formatting check and reviewed staged
+paths, whitespace, and credential patterns. The landing-page source was unchanged;
+application tests were not rerun solely for committing and pushing this work.
+
 ## Repository and delivery snapshot
 
 - Working branch: `dev`, tracking `origin/dev`.
 - Last committed scaffold milestone: `68718ae` — `chore: scaffold Phase 1 pnpm monorepo`.
   That scaffold commit was pushed to `origin/dev`; `main` was left unchanged.
-- The landing-page work, agent guide, and status-tracking updates are currently
-  local changes and have not been committed or pushed.
+- Landing-page work, licensed fonts, the agent guide, and the initial status tracker
+  were committed and pushed to `origin/dev` in `aaebdce` — `feat: add approved Stitch
+landing page and project guidance`. The remote branch hash was verified after
+  the push. Later documentation-only commits may update this delivery record.
 - No cloud deployment is configured or published.
 - At the most recent runtime check, verification servers were stopped and ports
   3000/4000 were free. Recheck before reporting the application as running.
@@ -146,11 +152,12 @@ does not authorize starting that work.
 
 ## Recent progress
 
-| Date (Asia/Kolkata) | Update                                                                                     |
-| ------------------- | ------------------------------------------------------------------------------------------ |
-| 25 November 2026    | Monorepo scaffold implemented and verified; `dev` created from `main` and scaffold pushed  |
-| 26 November 2026    | Approved Stitch landing page implemented; application checks and 8 browser tests passed    |
-| 26 November 2026    | Added this living status record and agent instructions to maintain it with project updates |
+| Date (Asia/Kolkata) | Update                                                                                                     |
+| ------------------- | ---------------------------------------------------------------------------------------------------------- |
+| 25 November 2026    | Monorepo scaffold implemented and verified; `dev` created from `main` and scaffold pushed                  |
+| 26 November 2026    | Approved Stitch landing page implemented; application checks and 8 browser tests passed                    |
+| 26 November 2026    | Added this living status record and agent instructions to maintain it with project updates                 |
+| 26 November 2026    | Landing page and project guidance committed and pushed to `origin/dev` in `aaebdce`; `main` left unchanged |
 
 Keep this history concise. Replace stale current-state statements when work ships;
 retain only useful milestone evidence and unresolved decisions. Never record secrets

@@ -1,7 +1,7 @@
 # Advanced Darvas Box — Project Status
 
 - **Last updated:** 26 November 2026 (Asia/Kolkata)
-- **Current milestone:** Login UI implemented and QA verified; Git delivery in progress
+- **Current milestone:** Login UI implemented, QA verified, and delivered to `dev`; authentication deferred
 - **Overall state:** Frontend foundation complete; business features and deployment pending
 
 This is the living implementation-status record. Requirements remain in the four
@@ -130,6 +130,21 @@ CI runs on `main` pushes and pull requests, not a direct `dev` push.
   components, approved specifications, backend, dependencies, and shared packages
   were preserved; no commit or push.
 
+## Latest Git delivery — 26 November 2026
+
+The reviewed login milestone was committed as `fb7995c` and pushed to
+`origin/dev`. GitHub's remote branch hash matched the local application commit.
+Delivery preparation verified formatting, whitespace, staged paths, and credential
+patterns across the 19 milestone files. Approved specifications, dependencies,
+backend, shared packages, and `main` were preserved. Ignored local tools, actual
+environment files, build output, and browser reports were excluded.
+
+Application code was unchanged during this Git delivery task, so application tests
+were not rerun solely for committing and pushing. The latest verified results remain
+38 tests and 20 production browser checks. A `dev` push does not trigger the current
+CI workflow; no remote CI success is claimed. This documentation update records the
+verified application delivery.
+
 ## Documentation maintenance history
 
 On **26 November 2026**, added this tracker, required same-task status updates in
@@ -151,7 +166,9 @@ application tests were not rerun solely for committing and pushing this work.
   were committed and pushed to `origin/dev` in `aaebdce` — `feat: add approved Stitch
 landing page and project guidance`. The remote branch hash was verified after
   the push. Later documentation-only commits may update this delivery record.
-- Login UI delivery to `origin/dev` is authorized and being prepared; push verification is pending.
+- Login UI and accessibility QA were committed and pushed to `origin/dev` in
+  `fb7995c` — `feat: implement themed login UI and accessibility QA`. The remote
+  branch hash was verified after the push; `main` was left unchanged.
 - No cloud deployment is configured or published.
 - The QA production servers on 3001/4000 were task-owned and stopped after review.
   A pre-existing frontend on 3000 was preserved; recheck before reporting its status.
@@ -222,6 +239,7 @@ does not authorize starting that work.
 | 26 November 2026    | Landing page and project guidance committed and pushed to `origin/dev` in `aaebdce`; `main` left unchanged                               |
 | 26 November 2026    | Login UI implemented and verified locally: 37 tests and 16 browser checks passed; no dependencies, commit, or push                       |
 | 26 November 2026    | Login QA: fixed input boundary contrast, added missing-password/keyboard/design checks; 38 tests and 20 production browser checks passed |
+| 26 November 2026    | Login milestone committed and pushed to `origin/dev` as `fb7995c`; remote hash verified and `main` unchanged                             |
 
 Keep this history concise. Replace stale current-state statements when work ships;
 retain only useful milestone evidence and unresolved decisions. Never record secrets

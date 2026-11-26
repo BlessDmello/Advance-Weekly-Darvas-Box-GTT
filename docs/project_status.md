@@ -343,6 +343,21 @@ CI runs on `main` pushes and pull requests, not a direct `dev` push.
 
 ## Latest Git delivery — 26 November 2026
 
+Authentication models, the secure first-Admin CLI, read-only Atlas ping utility,
+real login/session/logout, and the authenticated login redirect were committed as
+`8adda68` and pushed to `origin/dev`. GitHub's remote branch hash matched the local
+commit. The delivery includes the production E2E origin and alternate-port fixes.
+
+All 69 staged files were reviewed; credential scans, formatting, and staged
+whitespace checks passed during delivery. Actual environment files and generated
+artifacts were excluded. The four approved specifications and `main` were unchanged.
+The earlier 26 November verification remains the application evidence: 149 tests,
+24 compiled browser checks, typecheck, lint, and production build passed. Application
+checks were not rerun for this Git-only delivery. No remote CI result is claimed;
+the current workflow does not run on a direct `dev` push. No deployment was performed.
+
+## Prior login Git delivery — 26 November 2026
+
 The reviewed login milestone was committed as `fb7995c` and pushed to
 `origin/dev`. GitHub's remote branch hash matched the local application commit.
 Delivery preparation verified formatting, whitespace, staged paths, and credential
@@ -381,6 +396,8 @@ landing page and project guidance`. The remote branch hash was verified after
   `fb7995c` — `feat: implement themed login UI and accessibility QA`. The remote
   branch hash was verified after the push; `main` was left unchanged.
 - No cloud deployment is configured or published.
+- Authentication and database milestones, including the authenticated login redirect,
+  were committed and pushed to `origin/dev` in `8adda68`; the remote hash was verified.
 - The QA production servers on 3001/4000 were task-owned and stopped after review.
   A pre-existing frontend on 3000 was preserved; recheck before reporting its status.
 - The configured Stitch connection was verified for read access to the approved
@@ -467,6 +484,7 @@ does not authorize starting that work.
 | 26 November 2026    | Stage 3 real login/session/logout and protected shell implemented; 149 tests, 24 compiled browser checks, typecheck/lint/build passed; no real-account tests, commit or push      |
 | 26 November 2026    | Fixed production E2E build/start origin mismatch; 149 tests and 24 compiled browser checks passed on 3001/4001; development services preserved, no commit or push                 |
 | 26 November 2026    | Added server-verified /login redirect for authenticated users; 149 tests and 24 compiled browser checks passed, including no-JS and revoked-cookie regressions; no commit or push |
+| 26 November 2026    | Authentication/database milestones and login redirect committed and pushed to origin/dev as 8adda68; remote hash verified, secret/format/diff checks passed, main unchanged       |
 
 Keep this history concise. Replace stale current-state statements when work ships;
 retain only useful milestone evidence and unresolved decisions. Never record secrets

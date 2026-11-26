@@ -1,0 +1,234 @@
+# Advanced Darvas Box — Agent Guide
+
+This file applies to the entire repository. Keep it aligned with the implementation
+when project boundaries, commands, or workflows change. Record durable instructions
+here; keep installation details in `README.md`, requirements in the four approved
+specifications, and current implementation status in `docs/project_status.md`.
+
+## Required project-status maintenance
+
+- Read `docs/project_status.md` at the start of project work alongside this guide.
+- After every project update, update `docs/project_status.md` in the same task,
+  before the completion report. This includes code, UI, tests, dependencies,
+  configuration, documentation, and project decisions that change the recorded state.
+- Update the last-updated date using `Asia/Kolkata`, completed/current milestone,
+  pending work, material decisions or blockers, and a concise recent-progress entry.
+  Record Git/delivery outcomes when those actions are part of the authorized task.
+- Record only checks actually run, with their outcomes and date. Preserve older
+  application results as explicitly dated evidence; do not imply they reran after
+  a documentation-only update. State failures, skipped checks, and limitations.
+- Keep current state separate from planned work and recommendations. Remove stale
+  pending items as they are completed; do not mark a feature complete prematurely.
+- Do not add secrets, private financial records, or machine-specific credentials.
+  Read-only inspections without project changes do not need a new progress entry.
+- This maintenance rule authorizes updating the status record, not rewriting the
+  four approved specifications, implementing another milestone, committing, or pushing.
+- Keep the canonical filename `docs/project_status.md`; do not create a duplicate
+  `projecta_status.md`. It is a living status document, not a requirements baseline.
+
+## Project and current scope
+
+Advanced Darvas Box is a private, invite-only NSE stock-screening and manual
+swing-trading management application. It is a pnpm modular monolith.
+
+Phase 1 scaffolding and the public landing page at `/` are implemented. The page
+uses the approved Stitch desktop/mobile references, the existing theme provider,
+and local Geist/Inter fonts. Express provides a health API; shared packages, tests,
+and CI are established. Invite-only authentication is a future feature, not an
+existing access-control boundary. Do not describe this release as production-ready.
+
+The public landing page may show fixed mock stock values only inside its explicitly
+labeled "Illustrative Preview — Not Live Market Data" illustration. These values are
+presentation examples, never golden-test inputs, current prices, performance claims,
+or computed signals. The landing page must not fetch API or market data. Sign In
+remains disabled with a visible "Coming soon" label until a real login route exists.
+
+Approved landing references are in Stitch project `7871198770128109512`: desktop
+screen `c5c59502d9bd43d9a11e909aad659beb` and mobile screen
+`56d4657467e44785920baf4d357e8eb9`. Use the mobile supporting copy on all breakpoints;
+preserve the shared headline. Do not copy live-data badges, execution guarantees,
+institutional claims, or unsupported performance statistics from the design export.
+
+Implement only the user's requested milestone. Authentication, collections,
+screening, DMA/CAR/Darvas calculations, portfolio accounting, imports, notification
+delivery, scheduled jobs, and cloud deployment remain deferred until requested.
+Existing scaffold and landing-page maintenance do not require reapproving Phase 1.
+
+## Requirements baseline
+
+Read the relevant approved specifications before changing domain behavior:
+
+- `docs/PRD_v1_2.md`: requirements, strategy decisions, approved eligibility amendment.
+- `docs/SYSTEM_DESIGN_v1_1.md`: architecture, trust boundaries, module separation.
+- `docs/DATABASE_DESIGN_v1_0.md`: persistence, tenancy, revisions, and concurrency.
+- `docs/API_DESIGN_v1_0.md`: canonical `/api/v1` routes and HTTP contracts.
+
+Preserve these documents unless the user explicitly requests a specification edit.
+Do not rewrite or reformat them while editing application code. They are excluded
+from Prettier. Treat them as the user-approved baseline despite historical status
+labels within some documents. Explicit user instructions and approved amendments
+take precedence over superseded passages.
+
+Known issues to resolve before the corresponding feature work:
+
+- The collection inventory lists 26 collections while its introduction says 25.
+- Earlier PRD passages mention partial exits and cash constraints; later designs
+  specify full-position exits and no shared-cash solvency checks.
+- CAR anchor ties, adjustment provenance, monetary rounding/tick-size policy, and
+  exceptional sale reconciliation require verified decisions or source fixtures.
+- Referenced LLD, ERD image, and historical source workbooks/CSV are not supplied.
+
+Raise a contradiction when it materially affects the requested implementation.
+Do not invent a trading rule or block unrelated scaffold maintenance over it.
+
+## Architecture and dependency boundaries
+
+| Path                     | Responsibility                                                              |
+| ------------------------ | --------------------------------------------------------------------------- |
+| `apps/web`               | Next.js App Router, React, Tailwind, application-owned shadcn/ui components |
+| `apps/api`               | Express REST API, configuration, middleware, application composition        |
+| `packages/contracts`     | Browser-safe Zod schemas, JSON DTOs, inferred TypeScript types              |
+| `packages/strategy-core` | Framework-independent, deterministic strategy calculations when authorized  |
+| `packages/database`      | Explicit Mongoose connection lifecycle; future persistence adapters         |
+| `packages/test-fixtures` | Development-only verified golden data and provenance                        |
+| `tests/e2e`              | Playwright browser smoke tests                                              |
+
+- Web may consume contracts; never import API, Mongoose, database, or fixture code
+  into the frontend. Keep secrets out of client bundles.
+- API routes call application services; services use repository interfaces and
+  pure strategy functions. Future modules belong in `apps/api/src/modules`.
+- Strategy-core must not access HTTP, MongoDB, React, Express, or process environment.
+- Test fixtures are development-only. Do not fabricate historical golden results
+  or commit private portfolio records or unapproved source workbooks.
+- Shared packages use `workspace:*`, ESM, explicit `dist` exports, and declarations.
+  Do not bypass package exports with sibling-source aliases or deep imports.
+- Keep strict TypeScript. Libraries/API use NodeNext; web uses bundler resolution.
+  Use `.js` extensions for relative runtime imports in emitted NodeNext packages.
+- Retain the modular monolith. No Docker, Redis, Kafka, microservices, or additional
+  infrastructure without a specific requirement.
+
+## Domain invariants for future work
+
+These are design constraints, not permission to implement deferred features:
+
+- New-entry eligibility requires valid/fresh data AND Bull Run AND CAR Buy/Average
+  Out. Legacy 52-week suitability is an independent optional filter.
+- Weekly candidates use the prior completed NSE trading week's high. The ignore
+  band around the last accepted trigger is inclusive at both ±2.75% boundaries.
+- A qualifying trigger touch is a signal, not an executed trade. Accepted reference
+  advances on the signal and persists across completed position sequences.
+- Purchases and sales are manually confirmed. No broker execution, compulsory
+  stop-loss, forced bearish exit, or assumed fill may be introduced.
+- The approved position target is 6% above weighted average executed purchase price.
+  One-third of positive net realized capital gain grows the per-stock/per-portfolio
+  target once a successful sequence is fully closed.
+- Historical replay and source corrections must not silently change real trades
+  or live portfolio trigger references.
+- Preserve ownership boundaries between shared market data and private portfolios.
+- Money crosses HTTP boundaries as decimal strings. Use exact arithmetic for
+  financial calculations; do not use binary floating point at rule boundaries.
+- NSE session dates are `YYYY-MM-DD` in `Asia/Kolkata`; timestamps are separate UTC
+  values. Missing/stale inputs must not become fabricated actionable signals.
+
+## Toolchain and local development
+
+Use the versions pinned in `.node-version`, `package.json`, workspace manifests,
+and `pnpm-lock.yaml`. Check those files rather than assuming a global tool version.
+
+- Node.js: 26.13.1 LTS; root engines restrict the supported major to 26.
+- pnpm: 12.23.0. Use pnpm only; do not introduce npm/yarn lockfiles.
+- TypeScript 6.0.3 and ESLint 9.39.5 are intentional compatibility pins. Recheck
+  typescript-eslint and Next's lint-plugin peers before upgrading their majors.
+- Do not change the machine's global Node/pnpm installation without authorization.
+  An ignored `.tools/` directory may contain checkout-local tools, but fresh clones
+  must work using the prerequisites documented in `README.md`.
+- Use Windows/PowerShell-compatible commands and cross-platform package scripts.
+  Do not assume Bash, WSL, or Unix-only environment assignments.
+- For Next.js changes, consult relevant version-matched documentation under
+  `apps/web/node_modules/next/dist/docs/` when APIs or behavior are uncertain.
+  Keep `agentRules: false` in Next configuration so this root guide remains owned
+  by the project rather than regenerated by the development server.
+
+Run from the repository root:
+
+| Command                             | Purpose                                                        |
+| ----------------------------------- | -------------------------------------------------------------- |
+| `pnpm install --frozen-lockfile`    | Install the existing dependency graph reproducibly             |
+| `pnpm dev`                          | Build shared packages, then watch packages and run both apps   |
+| `pnpm dev:web` / `pnpm dev:api`     | Build packages and start one application                       |
+| `pnpm build:packages`               | Emit shared JavaScript and declarations                        |
+| `pnpm typecheck`                    | Check package/app types plus test and tool configuration       |
+| `pnpm lint`                         | ESLint with zero allowed warnings                              |
+| `pnpm test`                         | Vitest, React Testing Library, and Supertest checks            |
+| `pnpm build`                        | Production builds in dependency order                          |
+| `pnpm test:e2e`                     | Desktop/mobile Chromium smoke tests with managed local servers |
+| `pnpm format` / `pnpm format:check` | Format or verify implementation files                          |
+
+For intentional dependency updates, update manifests and the pnpm lockfile together,
+verify peer/engine compatibility, and review install-script policy changes. Do not
+disable strict peers, ignore engine failures, or regenerate the lockfile needlessly.
+
+Frontend uses port 3000; Express uses port 4000. Browser calls use relative
+`/api/v1` paths, rewritten by Next.js to the server-only `API_INTERNAL_ORIGIN`.
+`GET /api/v1/health` must work without MongoDB and return:
+
+```json
+{
+  "success": true,
+  "data": { "status": "ok", "service": "advanced-darvas-api" }
+}
+```
+
+## Configuration and data safety
+
+- Web loads `apps/web/.env.local`; API loads `apps/api/.env`. Root `.env.example`
+  is a reference, not an environment loader. Commit examples only.
+- Current defaults work without actual environment files. Do not require future
+  MongoDB, session, or Resend credentials for scaffold startup or isolated tests.
+- Database imports must not open connections. Connect explicitly, close owned
+  connections on shutdown, and keep automatic collection/index creation disabled
+  until the persistence milestone defines it.
+- Never expose server configuration through `NEXT_PUBLIC_*` or log credentials,
+  raw environment objects, request bodies, cookies, or private financial records.
+- Use dedicated development/test databases for authorized integration work. Do
+  not run migrations, seed data, or perform writes against production implicitly.
+- Preserve generated request IDs, centralized errors, security headers, request
+  size limits, and structured redacted logging when extending the backend.
+
+## Verification and working practices
+
+- Inspect branch/status and relevant files before editing; preserve unrelated work.
+- Make focused changes within the requested scope. Ask questions only for unresolved
+  choices that materially affect the work and cannot be resolved from the baseline.
+- Run checks appropriate to the change. For application/dependency changes, run
+  `pnpm typecheck`, `pnpm lint`, `pnpm test`, `pnpm build`, and `pnpm format:check`.
+  Documentation-only changes normally need formatting and diff checks, not app tests.
+- Add or update meaningful tests for changed behavior. Do not create dummy checks,
+  empty success scripts, invented golden data, or unnecessary implementation mirrors.
+- For UI/proxy/theme changes, run Playwright, review desktop/mobile behavior, and
+  check for overflow. Preserve light/dark/system themes and emerald visual tokens.
+  Landing-page checks include 390px mobile, tablet, and 1440px desktop, the static
+  preview disclaimer, functional section anchors, and absence of runtime data calls.
+- Playwright requires Chromium (`pnpm exec playwright install chromium`) and owns
+  ports 3000/4000 during tests. Stop only task-owned development processes; never
+  kill an unrelated process just to free a port. Use `E2E_PRODUCTION=1` through the
+  shell's environment syntax to test compiled apps after `pnpm build`.
+- CI currently runs on pushes to `main` and on pull requests, on Linux and Windows;
+  Linux also exercises compiled-app Chromium tests. A direct `dev` push alone does
+  not currently trigger this workflow. Do not claim remote CI passed without evidence.
+- Report actual checks and failures accurately. Never claim an application is
+  running without checking it, and state whether task-owned servers were left running.
+
+## Git workflow and maintaining this guide
+
+- `main` is the stable baseline; development work currently uses `dev`. Inspect the
+  active branch rather than switching or discarding changes automatically.
+- Commit, push, open a PR, merge, or deploy only when requested or already authorized
+  for the current task. An earlier task-specific push is not blanket permission.
+- Before committing, review staged paths/diffs. Exclude `.tools`, `node_modules`,
+  `.next`, `dist`, test reports, actual environment files, and secrets. Preserve the
+  approved specifications exactly unless a specification change is requested.
+- Never force-push, rewrite shared history, or modify `main` as a routine shortcut.
+- Update this guide with relevant workflow/architecture changes in the same task.
+  Remove obsolete instructions as features arrive. Do not turn it into a work log,
+  copy transient test counts, or record credentials and machine-specific state.

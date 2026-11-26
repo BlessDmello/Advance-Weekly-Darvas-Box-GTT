@@ -1,4 +1,5 @@
 docs/**
+!docs/project_status.md
 .git/
 .tools/
 node_modules/

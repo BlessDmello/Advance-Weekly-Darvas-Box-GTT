@@ -1,7 +1,7 @@
 # Advanced Darvas Box — Project Status
 
 - **Last updated:** 27 November 2026 (Asia/Kolkata)
-- **Current milestone:** Authentication Stage 5 family invitations complete and locally verified: 237 Vitest tests and 54 compiled browser checks passed, including the continuous invitation workflow; production readiness remains pending
+- **Current milestone:** Authentication Stages 4/5 committed and pushed to origin/dev; Stage 5 locally verified with 237 Vitest tests and 54 compiled browser checks; production readiness remains pending
 - **Overall state:** Frontend foundation complete; business features and deployment pending
 
 This is the living implementation-status record. Requirements remain in the four
@@ -77,6 +77,22 @@ and verification accurately rather than treating planned features as implemented
   weekly trigger values are mock presentation content, not calculations.
 - The landing content and layout remain preserved; its two Sign In actions open
   `/login`. Stage 3 changes auth behavior only; no trading dashboard is implemented.
+
+## Git delivery — 27 November 2026
+
+- Committed the reviewed Stage 4 authorization and Stage 5 invitation work,
+  Resend configuration examples, tests and project guidance in `d6f8346`
+  (`feat: enforce authorization and implement family invitations`). All 59 staged
+  paths matched the reviewed set. Push to `origin/dev` succeeded and the GitHub
+  branch hash was verified directly. No main-branch push, force-push or deployment.
+- Local `apps/api/.env` remains ignored and untracked. Credential/pattern scans
+  found no secrets in candidate files, and the four approved specifications remain
+  unchanged. Staged whitespace and root formatting/diff checks passed for
+  this delivery record; application tests were not repeated for Git/documentation
+  operations. The 237-test/54-browser verification below is dated application evidence.
+- A direct dev push does not trigger the current main/pull-request workflow;
+  no remote CI result is claimed. Production sender, real-recipient delivery and
+  hosting/proxy readiness remain pending as recorded below.
 
 ## Stage 5 verification closeout — 27 November 2026
 
@@ -668,6 +684,7 @@ authorize starting another milestone or deploying the application.
 | 27 November 2026    | Resend development sender configured with existing key preserved; 8 mocked email tests and all 232 regression tests passed, typecheck/lint/build passed; backend started and health verified; no real email or Git delivery                          |
 | 27 November 2026    | Approved single generic Resend test accepted (HTTP 200); one request, zero retries, no database writes or application changes; provider ID recorded above; no further sends, commit or push                                                          |
 | 27 November 2026    | Stage 5 closeout completed: 237 Vitest tests and 54 compiled browser checks passed, including continuous Admin-created invitation acceptance/login/logout; approved memory-only mock-mail fixture added; no Atlas writes, real email or Git delivery |
+| 27 November 2026    | Stage 4/5 and Resend work committed as d6f8346 and pushed to origin/dev; GitHub branch hash verified; reviewed 59 staged paths and secret/whitespace checks passed; main and local environment unchanged; no deployment or remote CI claim           |
 
 Keep this history concise. Replace stale current-state statements when work ships;
 retain only useful milestone evidence and unresolved decisions. Never record secrets

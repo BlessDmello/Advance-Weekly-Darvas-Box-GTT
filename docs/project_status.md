@@ -1,7 +1,7 @@
 # Advanced Darvas Box — Project Status
 
 - **Last updated:** 27 November 2026 (Asia/Kolkata)
-- **Current milestone:** Milestones 6 and 7A implemented, locally verified, committed and pushed to origin/dev; business data integration and production readiness remain pending
+- **Current milestone:** Phase 8C bounded CSV/XLSX parsing implemented and locally verified; uncommitted Phase 8B work preserved; Phase 8D persistence/API workflow and production readiness remain pending
 - **Overall state:** Frontend foundation complete; business features and deployment pending
 
 This is the living implementation-status record. Requirements remain in the four
@@ -11,29 +11,31 @@ and verification accurately rather than treating planned features as implemented
 
 ## Completed work
 
-| Area                | Current implementation                                                                                                                                   |
-| ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Monorepo            | pnpm workspaces with `apps/web`, `apps/api`, and four shared packages                                                                                    |
-| Frontend foundation | Next.js App Router, strict TypeScript, Tailwind, shadcn/ui Button/Card primitives, emerald theme tokens                                                  |
-| Public landing page | Route `/`, responsive header and mobile menu, approved hero copy, illustrative preview, three feature cards, four-step workflow, educational footer      |
-| Login UI            | Route `/login`, preserved design, real login with local validation, password toggle, remembered sessions, disabled recovery and static preview           |
-| Appearance          | Light, dark, and system themes with persistence; locally hosted Geist/Inter fonts and licenses                                                           |
-| Backend foundation  | Express, Zod environment validation, structured redacted logging, security middleware, request IDs, centralized errors                                   |
-| Health endpoint     | `GET /api/v1/health`; works without MongoDB                                                                                                              |
-| API routing         | Same-origin Next.js rewrite from `/api/v1/*` to the local Express API                                                                                    |
-| Contracts           | Shared Zod health/error and identity contracts, normalized email, roles/statuses and safe user DTO allowlist                                             |
-| Strategy-core       | Framework-independent boundaries for DMA, CAR, Darvas, suitability, and capital allocation; no trading calculations                                      |
-| Database package    | Explicit lifecycle; Family/User/Session/Invitation models, explicit indexes, atomic bootstrap; no import connections or automatic DDL                    |
-| Admin bootstrap     | Interactive development-only CLI; one-time Family/Admin transaction; user reports successful development workspace/Admin creation                        |
-| Authentication      | Login/current-user/logout/CSRF, hashed sessions, centralized active/Admin/ownership guards and protected workspace; isolated Stage 4 verification passed |
-| Family invitations  | Admin creation/listing/revoke/resend, 72-hour hash-only links, transactional Member acceptance and Resend adapter; development indexes prepared          |
-| Application shell   | Shared authenticated layout, collapsible desktop sidebar, grouped role-aware navigation, header/account controls and mobile bottom navigation/More sheet |
-| Main Dashboard UI   | Six unavailable metrics and five data-status panels inside the existing shell; server-rendered, responsive, themed and role-aware; no business data APIs |
-| Atlas diagnostic    | Explicit development-only `pnpm db:ping`; configuration guarded and credentials redacted; live ping succeeded against `advanced_darvas_dev`              |
-| Test fixtures       | Structure and provenance guidance for future verified golden tests; no fabricated historical market data                                                 |
-| Quality tooling     | ESLint, Prettier, Vitest, React Testing Library, Supertest, and Playwright                                                                               |
-| CI                  | GitHub Actions configured for Linux/Windows checks and Linux Chromium tests; no cloud deployment                                                         |
-| Project guidance    | Root `AGENTS.md` and this status tracker                                                                                                                 |
+| Area                   | Current implementation                                                                                                                                                  |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Monorepo               | pnpm workspaces with `apps/web`, `apps/api`, and four shared packages                                                                                                   |
+| Frontend foundation    | Next.js App Router, strict TypeScript, Tailwind, shadcn/ui Button/Card primitives, emerald theme tokens                                                                 |
+| Public landing page    | Route `/`, responsive header and mobile menu, approved hero copy, illustrative preview, three feature cards, four-step workflow, educational footer                     |
+| Login UI               | Route `/login`, preserved design, real login with local validation, password toggle, remembered sessions, disabled recovery and static preview                          |
+| Appearance             | Light, dark, and system themes with persistence; locally hosted Geist/Inter fonts and licenses                                                                          |
+| Backend foundation     | Express, Zod environment validation, structured redacted logging, security middleware, request IDs, centralized errors                                                  |
+| Health endpoint        | `GET /api/v1/health`; works without MongoDB                                                                                                                             |
+| API routing            | Same-origin Next.js rewrite from `/api/v1/*` to the local Express API                                                                                                   |
+| Contracts              | Shared Zod health/error and identity contracts, normalized email, roles/statuses and safe user DTO allowlist                                                            |
+| Strategy-core          | Framework-independent boundaries for DMA, CAR, Darvas, suitability, and capital allocation; no trading calculations                                                     |
+| Database package       | Identity plus seven market/import model definitions, explicit native validators/indexes, dry-run-first preparation and atomic bootstrap; no automatic DDL               |
+| Market-data foundation | Browser-safe Zod price/import contracts, exact Decimal128, provenance, scoped metadata, durable job/checkpoint shapes and publication states; no import services        |
+| Market-file parsing    | Worker-isolated CSV/XLSX reading, exact normalization, duplicate classification, bounded diagnostics and trusted-calendar assessment; no upload endpoint or persistence |
+| Admin bootstrap        | Interactive development-only CLI; one-time Family/Admin transaction; user reports successful development workspace/Admin creation                                       |
+| Authentication         | Login/current-user/logout/CSRF, hashed sessions, centralized active/Admin/ownership guards and protected workspace; isolated Stage 4 verification passed                |
+| Family invitations     | Admin creation/listing/revoke/resend, 72-hour hash-only links, transactional Member acceptance and Resend adapter; development indexes prepared                         |
+| Application shell      | Shared authenticated layout, collapsible desktop sidebar, grouped role-aware navigation, header/account controls and mobile bottom navigation/More sheet                |
+| Main Dashboard UI      | Six unavailable metrics and five data-status panels inside the existing shell; server-rendered, responsive, themed and role-aware; no business data APIs                |
+| Atlas diagnostic       | Explicit development-only `pnpm db:ping`; configuration guarded and credentials redacted; live ping succeeded against `advanced_darvas_dev`                             |
+| Test fixtures          | Structure and provenance guidance for future verified golden tests; no fabricated historical market data                                                                |
+| Quality tooling        | ESLint, Prettier, Vitest, React Testing Library, Supertest, and Playwright                                                                                              |
+| CI                     | GitHub Actions configured for Linux/Windows checks and Linux Chromium tests; no cloud deployment                                                                        |
+| Project guidance       | Root `AGENTS.md` and this status tracker                                                                                                                                |
 
 ## Landing-page decisions and boundaries
 
@@ -79,6 +81,109 @@ and verification accurately rather than treating planned features as implemented
   weekly trigger values are mock presentation content, not calculations.
 - The landing content and layout remain preserved; its two Sign In actions open
   `/login`. Stage 3 changes auth behavior only; no trading dashboard is implemented.
+
+## Phase 8B/8C Git delivery — 27 November 2026
+
+- User authorized committing and pushing the completed market-data foundation and
+  parsing work to the existing `dev` branch. Delivery review is in progress; no
+  remote publication is claimed yet.
+- The milestone's dated verification remains 425 passing Vitest tests, 64 compiled
+  browser regressions, two compiled parser smoke cases, TypeScript, ESLint and build.
+  This delivery task changes status documentation only and does not rerun those
+  application checks. Formatting, ADR formatting, whitespace, staged-scope and
+  credential-pattern checks passed for all 49 staged files before committing.
+  No credential-pattern findings or unexpected staged paths were detected.
+  The existing development-only minimatch
+  advisory remains documented; no production dependency finding was reported.
+- Actual environment files and generated output are excluded. The four approved
+  specifications, public/private UI and authentication implementation are preserved.
+  No deployment, Atlas operation or additional email is authorized by this delivery.
+
+## Phase 8C parsing and validation — 27 November 2026
+
+- Added backend-only CSV/XLSX readers, pure normalization/duplicate classification,
+  explicit mappings/provenance/date modes, additive browser-safe result schemas and
+  trusted-calendar snapshot validation. The selected stock remains caller-resolved
+  against a verified master; no reference sources are invented or loaded automatically.
+- Exact OHLC/volume validators and mapping/range schemas reuse Phase 8B contracts.
+  Unknown basis can retain observed preview rows but blocks confirmation. BOTH cannot
+  be inferred from one OHLC series; no raw/adjusted counterpart is fabricated.
+- Enforced file/MIME/content, row/column, ZIP size/ratio/integrity/path, XML depth,
+  cell/record and diagnostic bounds. Formula/cached-value, macro, encryption, external
+  relationship and DTD rejection is explicit. A single owned worker has memory and
+  execution limits; capacity rejects excess requests instead of retaining a queue.
+- Pinned csv-parse 7.0.3, yauzl 3.4.0, @rgrove/parse-xml 5.2.0 and development-only
+  @types/yauzl 3.4.0 after checking engines, dependency/lifecycle metadata and upstream
+  documentation. No unrelated upgrades or install-script policy changes.
+- Final verification on 27 November 2026: **425/425 Vitest tests across 44 files passed**,
+  including **117 new parser/contract tests** and all earlier authentication, invitation,
+  authorization and database tests. Full workspace TypeScript, zero-warning ESLint and
+  production builds passed after the final source-worker fix. Root formatting and
+  whitespace/diff verification passed; generated Next references were restored.
+- Compiled Playwright **64/64 regressions passed** using isolated ports 3001/4001,
+  disposable MongoDB and mocked email. Coverage includes both roles, Login/Logout,
+  invitation acceptance, private/public navigation and 360/390/768/1440px themed layouts.
+  Two additional compiled-parser smoke cases (CSV/XLSX with real JS workers) passed.
+  Task-owned servers were stopped; no frontend/test listeners remained on ports
+  3000/3001/4001, and the existing port-4000 backend health remained OK.
+- An additional plain-Node source-worker check exposed source URL query/loader
+  resolution failure outside Vitest. Fixed pathname detection and resolved the existing
+  API-owned tsx loader explicitly. A new standalone subprocess test removes NODE_PATH
+  and verifies correct worker startup/results. All seven worker-execution tests and
+  the final full suite passed. Earlier strict inference/type-only import and encrypted
+  ZIP fixture issues were corrected; no final application-test failures remain.
+- Production dependency audit reports zero advisories. Full audit identifies one
+  pre-existing moderate minimatch 10.2.6 development advisory through shadcn/ts-morph
+  (GHSA-g3hv-75wg-m249); its version already exists in HEAD and remains unchanged.
+  No production dependency finding or known new parser advisory was reported.
+- All new data is synthetic, including the test calendar; these tests establish no
+  real NSE calendar accuracy, source-workbook parity or provider-format compatibility.
+  Actual source files, verified reference data and adjustment provenance remain needed.
+- No parser stage loads app environment files, accesses Atlas, sends mail, persists
+  previews, writes prices/revisions, exposes routes, seeds data or starts jobs. Existing
+  auth/invitations/public UI/shell/Dashboard and the four specifications remain preserved.
+  No commit, push or deployment. See the imports module README for supported profiles
+  and resource limits. This supersedes the broad future-8C scope discussed in ADR 0002:
+  persistence/API/runner/UI work remains deferred to separately approved phases.
+
+## Phase 8B market-data foundation — 27 November 2026
+
+- Added ADR 0002, browser-safe Zod market/import contracts, seven connection-scoped
+  models, explicit native validators/indexes and development-only dry-run-first
+  market-storage preparation. No parser dependencies or lockfile changes.
+- Exact decimal strings/Decimal128, explicit raw/adjusted provenance, family-scoped
+  import metadata, append-only audit, per-stock active-job exclusion, durable
+  checkpoints/fencing, partial TTL staging and separate publication states are defined.
+  Transaction guards cover payload attachment/release and dataset publication.
+- No upload/preview/commit API, runner, stock/calendar seed, Admin UI, strategy
+  calculation or Dashboard integration. Authentication readiness remains independent.
+- Verification on 27 November 2026: full workspace TypeScript, zero-warning ESLint,
+  full Vitest **308/308 tests across 40 files** (53 new foundation tests), production
+  build, root formatting, explicit ADR formatting and whitespace/diff checks passed.
+  Additional tooling/test TypeScript checking passed after the final adversarial cases.
+- Compiled Playwright **64/64 regressions passed** on isolated ports 3001/4001,
+  including Login/Logout, session denial, role authorization, invitation acceptance,
+  shell and public/Dashboard theme/responsive checks. The first browser startup was
+  blocked by a Windows EPERM while deleting generated Next output (zero tests ran);
+  the unchanged retry passed. No application/configuration workaround was added.
+- Task-owned browser servers and disposable MongoDB processes were stopped after
+  verification. The pre-existing backend on port 4000 remained healthy; no task-owned
+  frontend server was left running.
+- Isolated tests cover native BSON constraints, exact decimal precision, duplicate
+  identities/idempotency, concurrent stock exclusion, optimistic versions, ordered
+  lifecycle/checkpoints, family-bound payload attachment, publication guards, active
+  payload TTL safety and index/validator drift. Initial BSON boolean-alias, portable
+  declaration and strict fixture typing/lint issues were fixed without weakening checks.
+- All database tests use owned disposable loopback replica sets and explicitly
+  synthetic records, never app `.env` or Atlas settings. CLI tests mock connectivity;
+  the live preparation command was not invoked, even in dry-run. No reference data
+  downloads/seeds, production access, real email, commit, push or deployment.
+- No dependencies or lockfile changes; no auth/invitation behavior, runtime routes,
+  frontend source or approved-specification changes. Generated Next references were
+  restored. Model/native validation is a foundation, not an implemented import service;
+  privileged raw-driver mutations remain a trusted operator capability. Phase 8C
+  still needs audited transaction adapters, reference verification, parsers/APIs,
+  resumable runner and UI. No production/trading readiness is claimed.
 
 ## Shell and Dashboard Git delivery — 27 November 2026
 
@@ -724,17 +829,17 @@ secrets. Local ignored tools are optional; fresh clones should follow the README
 
 ## Pending implementation
 
-| Area                        | State                                                                                                                                                  |
-| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Invite-only authentication  | Login/session/logout/CSRF, authorization and invitations implemented; recovery and actual business APIs remain pending                                 |
-| Persistence                 | Identity models/repositories implemented; development Admin bootstrap confirmed by user; non-identity persistence pending                              |
-| Market-data imports         | No CSV/XLSX parsing, preview, commit, resumable jobs, revision processing, or trading-session calendar                                                 |
-| Screening and strategies    | No DMA/CAR/Darvas/suitability algorithms, eligibility calculations, or golden parity tests                                                             |
-| Private application screens | Authenticated shell and unavailable-state Dashboard UI complete; live Dashboard data, screener, watchlists, stock detail, portfolio and trades pending |
-| Portfolio accounting        | No confirmed trade recording, positions, targets, allocation ledger, or corrections                                                                    |
-| Notifications               | Invitation-only synchronous Resend adapter implemented; trading notifications, durable outbox and scheduled digest remain pending                      |
-| Operations                  | No Vercel/Render deployment, production configuration, backup/restore verification, or operational monitoring                                          |
-| Later research              | Backtests and strategy comparisons remain deferred                                                                                                     |
+| Area                        | State                                                                                                                                                                        |
+| --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Invite-only authentication  | Login/session/logout/CSRF, authorization and invitations implemented; recovery and actual business APIs remain pending                                                       |
+| Persistence                 | Identity and market/import models implemented; market preparation/reference loading not performed against Atlas in Phase 8B; business-resource persistence pending           |
+| Market-data imports         | Contracts/models/index preparation and bounded CSV/XLSX parsing implemented; preview/commit APIs, persistence, runner, reference/calendar seeds and import UI remain pending |
+| Screening and strategies    | No DMA/CAR/Darvas/suitability algorithms, eligibility calculations, or golden parity tests                                                                                   |
+| Private application screens | Authenticated shell and unavailable-state Dashboard UI complete; live Dashboard data, screener, watchlists, stock detail, portfolio and trades pending                       |
+| Portfolio accounting        | No confirmed trade recording, positions, targets, allocation ledger, or corrections                                                                                          |
+| Notifications               | Invitation-only synchronous Resend adapter implemented; trading notifications, durable outbox and scheduled digest remain pending                                            |
+| Operations                  | No Vercel/Render deployment, production configuration, backup/restore verification, or operational monitoring                                                                |
+| Later research              | Backtests and strategy comparisons remain deferred                                                                                                                           |
 
 Live market-data feeds and broker order execution are not part of the current
 approved milestone. Do not introduce them implicitly.
@@ -764,8 +869,9 @@ approved milestone. Do not introduce them implicitly.
 
 ## Recommended next milestone
 
-Agree on Dashboard source API contracts and the next business-resource scope/tenancy requirements, plus production
-proxy/TLS verification before deployment. The development sender is configured;
+Agree on Phase 8D preview/persistence boundaries and obtain representative source files
+and verified stock/calendar manifests before integrating actual imports. Dashboard
+source APIs and production proxy/TLS verification remain separate future work. The development sender is configured;
 one approved generic provider test was accepted. Additional sends require approval. Production invitation email
 needs a verified sender domain and a reachable HTTPS application origin. This recommendation does not
 authorize starting another milestone or deploying the application.
@@ -799,6 +905,8 @@ authorize starting another milestone or deploying the application.
 | 27 November 2026    | Milestone 6 authenticated shell implemented: 250 Vitest tests, 60 full compiled browser checks plus 2 More-sheet Logout checks passed; role-aware navigation, responsive/keyboard/theme checks verified; no backend changes, Atlas writes, real email, commit or push         |
 | 27 November 2026    | Milestone 7A unavailable-state Dashboard UI implemented: 255 Vitest tests across 35 files, 64 compiled Playwright tests, typecheck/lint/build passed; both roles and all requested viewports/themes verified; no APIs, dependencies, Atlas writes, real email or Git delivery |
 | 27 November 2026    | Milestones 6/7A committed as 59e664c and pushed to origin/dev; remote hash verified, 26 staged paths and credential/format/diff checks passed; main unchanged, no deployment or remote CI claim                                                                               |
+| 27 November 2026    | Phase 8B contracts/seven market models, native indexes/validators and explicit dry-run preparation implemented; 308 Vitest tests, 64 compiled regressions, typecheck/lint/build/format/diff passed; no parser/API/UI, Atlas access, seed, dependencies or Git delivery        |
+| 27 November 2026    | Phase 8C bounded CSV/XLSX parsing implemented; 425 Vitest tests (117 new), 64 compiled browser regressions and two compiled parser smoke cases passed; source-worker portability fixed; no Atlas writes, parser routes/persistence, real email or Git delivery                |
 
 Keep this history concise. Replace stale current-state statements when work ships;
 retain only useful milestone evidence and unresolved decisions. Never record secrets

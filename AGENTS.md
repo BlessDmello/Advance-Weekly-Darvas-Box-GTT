@@ -101,10 +101,40 @@ and redirects authenticated visitors to `/dashboard` before rendering the form,
 including without JavaScript. Cookie presence alone must not trigger a redirect.
 Invalid/revoked sessions or unavailable validation leave the public form accessible.
 
-Implement only the user's requested milestone. Business-resource APIs, non-identity collections,
-screening, DMA/CAR/Darvas calculations, portfolio accounting, imports, trading
+Implement only the user's requested milestone. Business-resource APIs,
+screening, DMA/CAR/Darvas calculations, portfolio accounting, import workflows, trading
 notification delivery, scheduled jobs, and cloud deployment remain deferred until requested.
 Existing scaffold and landing-page maintenance do not require reapproving Phase 1.
+
+Phase 8B adds market-data contracts and the seven market/import model definitions;
+Phase 8C adds bounded, backend-only CSV/XLSX parsing and validation. Import APIs,
+reference seeding, persistence adapters, a runner and UI remain deferred. See
+`docs/adr/0002-market-data-import-foundation.md` for additive storage decisions.
+`createMarketModels` only registers models. `verifyMarketStorage` is read-only;
+`prepareMarketStorage` is explicit and dry-run by default. The development-only
+`pnpm market-data:prepare` command owns its connection and needs `--apply` for DDL.
+Never invoke it against Atlas as part of automated tests or ordinary app startup.
+Do not couple market readiness to Login/health or seed real reference data implicitly.
+Prices use exact Decimal128/string contracts; never cast JS Number prices or round
+imports. Staging ATTACHED records have no TTL deadline, and release requires a
+matching terminal job in a transaction. Dataset publication changes require the
+matching job and transaction. Model query/bulk mutations are intentionally blocked;
+future persistence work must supply explicitly audited transaction adapters before writes.
+Price-import completion always leaves derived processing DEFERRED. Public state
+labels and schema fields are not proof of an implemented import/calculation service.
+
+Use `apps/api/src/modules/imports/parsing/parser.ts` for bounded parser execution;
+see the module `README.md` for source profiles, limits and dependency decisions.
+Reuse shared decimal/date/OHLC validators. Never convert financial cell text through
+Number/parseFloat, infer adjustment basis from Adjusted Close, or evaluate formulas.
+Unknown basis and absent/unverified calendar coverage block confirmation. Resolve the
+selected stock and calendar snapshot from trusted reference sources in future API
+integration; uploaded values cannot certify their own master/calendar provenance.
+The result's eligibility is parser readiness, not authorization or an import commit.
+Tests use synthetic stock/session fixtures only; they establish no real NSE calendar
+or provider compatibility. No parser stage may connect to MongoDB, load app `.env`,
+write files/records, call external URLs or seed reference data. Keep worker admission,
+memory, decompression and hard deadline safeguards when adding future preview APIs.
 
 ## Requirements baseline
 
@@ -135,15 +165,15 @@ Do not invent a trading rule or block unrelated scaffold maintenance over it.
 
 ## Architecture and dependency boundaries
 
-| Path                     | Responsibility                                                               |
-| ------------------------ | ---------------------------------------------------------------------------- |
-| `apps/web`               | Next.js App Router, React, Tailwind, application-owned shadcn/ui components  |
-| `apps/api`               | Express REST API, configuration, middleware, application composition         |
-| `packages/contracts`     | Browser-safe Zod schemas, JSON DTOs, inferred TypeScript types               |
-| `packages/strategy-core` | Framework-independent, deterministic strategy calculations when authorized   |
-| `packages/database`      | Explicit connection lifecycle, identity models, indexes and atomic bootstrap |
-| `packages/test-fixtures` | Development-only verified golden data and provenance                         |
-| `tests/e2e`              | Playwright browser smoke tests                                               |
+| Path                     | Responsibility                                                                |
+| ------------------------ | ----------------------------------------------------------------------------- |
+| `apps/web`               | Next.js App Router, React, Tailwind, application-owned shadcn/ui components   |
+| `apps/api`               | Express REST API, configuration, middleware, application composition          |
+| `packages/contracts`     | Browser-safe Zod schemas, JSON DTOs, inferred TypeScript types                |
+| `packages/strategy-core` | Framework-independent, deterministic strategy calculations when authorized    |
+| `packages/database`      | Explicit lifecycle, identity/market models, storage preparation and bootstrap |
+| `packages/test-fixtures` | Development-only verified golden data and provenance                          |
+| `tests/e2e`              | Playwright browser smoke tests                                                |
 
 - Web may consume contracts; never import API, Mongoose, database, or fixture code
   into the frontend. Keep secrets out of client bundles.

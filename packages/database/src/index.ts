@@ -10,6 +10,13 @@ export { isInvitationValid, isSessionValid } from './auth-validity.js';
 export { createInvitationRepository, InvitationStorageError } from './invitation-repository.js';
 export type { InvitationRepository } from './invitation-repository.js';
 export { prepareInvitationStorage, verifyInvitationStorage } from './invitation-storage.js';
+export { createMarketModels } from './market-models.js';
+export type { MarketModels } from './market-models.js';
+export {
+  inspectMarketStorage,
+  prepareMarketStorage,
+  verifyMarketStorage,
+} from './market-storage.js';
 
 const databaseConfigSchema = z.object({
   uri: z.string().regex(/^mongodb(?:\+srv)?:\/\//),

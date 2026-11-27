@@ -112,7 +112,7 @@ apps/
 packages/
   contracts/            Browser-safe Zod HTTP schemas and inferred types
   strategy-core/        Pure TypeScript strategy module boundaries only
-  database/             Explicit Mongoose lifecycle, identity models, atomic bootstrap
+  database/             Explicit lifecycle, identity/market models, storage preparation
   test-fixtures/        Future golden source manifests and reviewed outputs
 tests/e2e/              Real desktop/mobile browser smoke tests
 .github/workflows/      Linux and Windows CI, no cloud deployment
@@ -182,6 +182,38 @@ Health works without MongoDB:
 ```
 
 ## MongoDB Atlas connectivity
+
+### Market-storage foundation (Phase 8B)
+
+The database package defines stocks, trading sessions, daily prices, immutable price
+revisions, import batches, jobs and bounded staging. It does not upload/parse files,
+seed stock/calendar reference data, run jobs, calculate indicators or provide an
+import UI. Existing Login and health checks do not prepare or require market storage.
+
+An operator can review market-storage readiness using `pnpm market-data:prepare`.
+The command builds the API dependency graph, uses the existing `apps/api/.env`
+loader and explicit connection utility, and defaults to a read-only dry-run.
+Only after reviewing the report and separately authorizing development DDL, use
+`pnpm market-data:prepare --apply`. Both database settings must name
+`advanced_darvas_dev`, NODE_ENV must be development, and production is refused.
+Preparation installs named collections, native validators and indexes only. It
+does not seed records, drop indexes or repair incompatible data. No preparation
+command is run by CI, normal startup or this milestone's verification.
+
+See [ADR 0002](docs/adr/0002-market-data-import-foundation.md) for price provenance,
+family scope, publication, immutable audit, expiry and recovery requirements.
+
+### Bounded market-file parsing (Phase 8C)
+
+The backend has a worker-isolated single-stock CSV/XLSX parsing module. It preserves
+exact decimal text, requires explicit mappings/provenance and a trusted calendar
+snapshot, and returns bounded diagnostics and normalized observations. Unknown price
+basis or unavailable verified sessions block confirmation. No upload route, import
+confirmation, database writes, reference seeding, runner or Admin UI is implemented.
+See the [module guide](apps/api/src/modules/imports/README.md) for supported formats,
+security/resource limits, dependency decisions and remaining source-file limitations.
+
+### Read-only Atlas connectivity check
 
 Keep real credentials in the ignored `apps/api/.env` file. The tracked example
 contains placeholders only. Percent-encode reserved characters in the username or

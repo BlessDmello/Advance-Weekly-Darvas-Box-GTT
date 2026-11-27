@@ -9,6 +9,7 @@
     "pnpm": "12.23.0"
   },
   "scripts": {
+    "market-data:prepare": "pnpm --filter @darvas/api... -r build && pnpm --filter @darvas/api market-data:prepare",
     "admin:bootstrap": "pnpm --filter @darvas/api... -r build && pnpm --filter @darvas/api admin:bootstrap",
     "predev": "pnpm build:packages",
     "dev": "concurrently --kill-others --names packages,web,api \"pnpm dev:packages\" \"pnpm --filter @darvas/web dev\" \"pnpm --filter @darvas/api dev\"",

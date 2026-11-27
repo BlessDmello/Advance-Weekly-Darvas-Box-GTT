@@ -42,6 +42,7 @@ test('completes Admin login, invitation creation, acceptance, Member login, prot
   const token = new URLSearchParams(link.hash.slice(1)).get('token')!;
   expect(JSON.stringify(invitation)).not.toContain(token);
   await page.goto('/dashboard');
+  await page.getByRole('button', { name: 'Open account menu' }).click();
   await page.getByRole('button', { name: 'Sign Out' }).click();
   await expect(page).toHaveURL(/\/login$/);
   await page.goto(link.href);
@@ -59,7 +60,7 @@ test('completes Admin login, invitation creation, acceptance, Member login, prot
   await page.getByLabel('Password', { exact: true }).fill(password);
   await page.getByRole('button', { name: 'Sign In to Workspace' }).click();
   await expect(page).toHaveURL(/\/dashboard$/);
-  await expect(page.getByText('Signed in as Workflow Member.', { exact: true })).toBeVisible();
+  await expect(page.getByText('Welcome back, Workflow Member.', { exact: true })).toBeVisible();
   await expect(page.getByText('Role: Member', { exact: true })).toBeVisible();
   await expect(page.getByRole('link', { name: 'Family invitations' })).toHaveCount(0);
   const profile = await context.request.get('/api/v1/auth/me');
@@ -74,6 +75,7 @@ test('completes Admin login, invitation creation, acceptance, Member login, prot
   const stored = await page.evaluate(() => JSON.stringify({ ...localStorage, ...sessionStorage }));
   expect(stored).not.toContain(password);
   expect(stored).not.toContain(token);
+  await page.getByRole('button', { name: 'Open account menu' }).click();
   await page.getByRole('button', { name: 'Sign Out' }).click();
   await expect(page).toHaveURL(/\/login$/);
   expect((await context.request.get('/api/v1/auth/me')).status()).toBe(401);
@@ -90,6 +92,7 @@ test('Admin can invite Members while a Member cannot reach invitation administra
   expect(denied!.status()).toBe(404);
   expect((await context.request.get('/api/v1/invitations')).status()).toBe(403);
   await page.goto('/dashboard');
+  await page.getByRole('button', { name: 'Open account menu' }).click();
   await page.getByRole('button', { name: 'Sign Out' }).click();
   await expect(page).toHaveURL(/\/login$/);
   await page.getByLabel('Email address', { exact: true }).fill(testCredentials.email);
@@ -192,12 +195,13 @@ test('accepts a single-use invitation without login, token URL leakage or creden
   await page.getByLabel('Password', { exact: true }).fill('synthetic family invitation password');
   await page.getByRole('button', { name: 'Sign In to Workspace' }).click();
   await expect(page).toHaveURL(/\/dashboard$/);
-  await expect(page.getByText('Signed in as Invited Member.', { exact: true })).toBeVisible();
+  await expect(page.getByText('Welcome back, Invited Member.', { exact: true })).toBeVisible();
   await expect(page.getByText('Role: Member', { exact: true })).toBeVisible();
   await expect(page.getByRole('link', { name: 'Family invitations' })).toHaveCount(0);
   const profile = await context.request.get('/api/v1/auth/me');
   expect(profile.status()).toBe(200);
   expect(await profile.json()).toMatchObject({ data: { user: { email, role: 'MEMBER' } } });
+  await page.getByRole('button', { name: 'Open account menu' }).click();
   await page.getByRole('button', { name: 'Sign Out' }).click();
   await expect(page).toHaveURL(/\/login$/);
   expect((await context.request.get('/api/v1/auth/me')).status()).toBe(401);

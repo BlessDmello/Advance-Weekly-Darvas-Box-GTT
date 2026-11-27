@@ -36,11 +36,36 @@ are implemented. Public pages share the brand, palette, theme provider, local
 Geist/Inter fonts, and static chart illustration. Express provides a health API;
 shared packages, tests, and CI are established. Identity models and a development-only
 first-Admin CLI exist. Real email/password login, MongoDB sessions, logout, CSRF
-and a minimal protected `/dashboard` destination are connected. Central active-account,
+and a protected `/dashboard` UI with unavailable business data are connected. Central active-account,
 Admin and private-ownership guards exist. Family invitations, Member registration,
 verification, revocation and fresh-token resend are implemented; actual business-resource
 APIs remain deferred. Do not describe this release
 as production-ready or the workspace shell as a completed trading dashboard.
+
+The authenticated application shell lives in `apps/web/app/(private)/layout.tsx`
+and `apps/web/components/shell`. It wraps only Dashboard and invitation administration;
+public Landing, Login and invitation acceptance retain their own layouts. Reuse the
+existing brand, public palette/fonts, theme controls and LogoutButton. Sidebar collapse
+is state for the mounted shell only; do not persist sidebar state or identity/role
+flags. Preserve the existing theme preference behavior.
+Only Dashboard and Family Management have implemented navigation destinations.
+Future entries are disabled with Coming soon labels and no href; Administration is
+omitted for Members. Keep the canonical navigation definition in `shell/navigation.ts`.
+Use the selected Stitch Main Trading Dashboard references `13580afd125a432a8f2d8eef02d5aee4`
+and `852fdff541564acfb5545e28a77ebe2f` for shell structure, with the approved navigation
+groups and Alerts mobile tab. Do not copy sample financial values, hardcoded identities,
+portfolio switching, market-status badges, prototype controls or engine claims.
+
+The Main Dashboard UI lives in `components/dashboard/main-dashboard.tsx`, rendered
+by the guarded `/dashboard` Server Component inside the existing shell. Its six
+metrics and portfolio, eligible-stock, target, activity and freshness panels use
+explicit unavailable states until business APIs exist. Use `—`, Not connected and
+Unknown; missing integration is not evidence of zero holdings or no eligible stocks.
+Do not add illustrative financial values, performance curves, fake events or refresh
+timestamps. Preserve both layout- and page-level session guards. Future financial
+data must remain owner-scoped, including for Admins; signals and manually recorded
+transactions must remain distinct. No business API or calculation is implemented
+by this UI milestone. Reuse the existing shell and avoid nested main elements.
 
 The public landing and login pages may show fixed mock stock values only inside an explicitly
 labeled "Illustrative Preview — Not Live Market Data" illustration. These values are
@@ -281,6 +306,13 @@ Frontend uses port 3000; Express uses port 4000. Browser calls use relative
 - Private pages call `requireCurrentUser` at the page/data boundary. A shared
   layout alone does not protect child rendering or RSC payloads. Backend outages
   render only unavailable feedback; framework redirects must propagate normally.
+- The private layout validates identity for shell chrome and passes only display
+  name and role to client controls. Keep page-level and API guards when adding routes:
+  Next layouts persist across client navigation, and menu visibility grants no access.
+  Shell popovers/sheets must retain focus trapping where modal, Escape dismissal,
+  focus restoration and accessible labels. Desktop starts at 1024px; smaller screens
+  use safe-area-aware bottom navigation and More. Use account-menu Logout rather
+  than duplicating the authentication flow. Public-page CSS must remain unchanged.
 - Never expose server configuration through `NEXT_PUBLIC_*` or log credentials,
   raw environment objects, request bodies, cookies, or private financial records.
 - Invitation contracts are recorded in `docs/adr/0001-family-invitations.md` as

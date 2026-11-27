@@ -18,7 +18,7 @@ test('logs in and out through Next with a real isolated MongoDB session', async 
   await page.getByRole('checkbox', { name: 'Remember Me' }).check();
   await page.getByRole('button', { name: 'Sign In to Workspace' }).click();
   await expect(page).toHaveURL(/\/dashboard$/);
-  await expect(page.getByRole('heading', { name: 'Your workspace' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible();
   const session = (await context.cookies()).find((cookie) => cookie.name === 'adb_session')!;
   expect(session).toBeDefined();
   expect(session.httpOnly).toBe(true);
@@ -33,7 +33,7 @@ test('logs in and out through Next with a real isolated MongoDB session', async 
   expect(storage).not.toContain(testCredentials.password);
   expect(storage).not.toContain(session.value);
   await page.reload();
-  await expect(page.getByRole('heading', { name: 'Your workspace' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible();
   await page.goto('/login');
   await expect(page).toHaveURL(/\/dashboard$/);
   await expect(page.getByRole('form', { name: 'Sign in' })).toHaveCount(0);
@@ -52,6 +52,7 @@ test('logs in and out through Next with a real isolated MongoDB session', async 
   } finally {
     await noJavaScript.close();
   }
+  await page.getByRole('button', { name: 'Open account menu' }).click();
   await page.getByRole('button', { name: 'Sign Out' }).click();
   await expect(page).toHaveURL(/\/login$/);
   expect((await context.request.get('/api/v1/auth/me')).status()).toBe(401);

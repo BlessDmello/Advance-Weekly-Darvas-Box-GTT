@@ -7,16 +7,12 @@ vi.mock('@/lib/auth/server', () => ({
   requireCurrentUser: vi.fn(),
   WorkspaceUnavailableError: class extends Error {},
 }));
-vi.mock('@/components/theme-toggle', () => ({ ThemeToggle: () => <button>Theme</button> }));
-vi.mock('@/components/auth/logout-button', () => ({
-  LogoutButton: () => <button>Sign Out</button>,
-}));
 afterEach(() => {
   cleanup();
   vi.clearAllMocks();
 });
 
-describe('minimal protected workspace', () => {
+describe('protected Dashboard', () => {
   it.each(['ADMIN', 'MEMBER'] as const)('uses the verified %s profile', async (role) => {
     vi.mocked(requireCurrentUser).mockResolvedValue({
       id: 'a'.repeat(24),
@@ -27,9 +23,10 @@ describe('minimal protected workspace', () => {
       status: 'ACTIVE',
     });
     render(await Workspace());
-    expect(screen.getByText('Signed in as Verified Name.')).toBeVisible();
+    expect(screen.getByText('Welcome back, Verified Name.')).toBeVisible();
     expect(screen.getByText(`Role: ${role === 'ADMIN' ? 'Admin' : 'Member'}`)).toBeVisible();
-    expect(screen.getByRole('button', { name: 'Sign Out' })).toBeVisible();
+    expect(screen.queryByRole('main')).not.toBeInTheDocument();
+    expect(screen.queryByRole('banner')).not.toBeInTheDocument();
     if (role === 'ADMIN')
       expect(screen.getByRole('link', { name: 'Family invitations' })).toHaveAttribute(
         'href',
@@ -41,7 +38,7 @@ describe('minimal protected workspace', () => {
     vi.mocked(requireCurrentUser).mockRejectedValue(new WorkspaceUnavailableError());
     render(await Workspace());
     expect(screen.getByRole('alert')).toHaveTextContent('Workspace is temporarily unavailable');
-    expect(screen.queryByRole('heading', { name: 'Your workspace' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Dashboard' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Sign Out' })).not.toBeInTheDocument();
   });
   it('preserves framework redirects rather than converting them to unavailable feedback', async () => {

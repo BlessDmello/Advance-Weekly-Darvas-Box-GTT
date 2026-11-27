@@ -36,8 +36,10 @@ are implemented. Public pages share the brand, palette, theme provider, local
 Geist/Inter fonts, and static chart illustration. Express provides a health API;
 shared packages, tests, and CI are established. Identity models and a development-only
 first-Admin CLI exist. Real email/password login, MongoDB sessions, logout, CSRF
-and a minimal protected `/dashboard` destination are connected. Invitation workflows
-and business-resource authorization remain deferred. Do not describe this release
+and a minimal protected `/dashboard` destination are connected. Central active-account,
+Admin and private-ownership guards exist. Family invitations, Member registration,
+verification, revocation and fresh-token resend are implemented; actual business-resource
+APIs remain deferred. Do not describe this release
 as production-ready or the workspace shell as a completed trading dashboard.
 
 The public landing and login pages may show fixed mock stock values only inside an explicitly
@@ -74,9 +76,9 @@ and redirects authenticated visitors to `/dashboard` before rendering the form,
 including without JavaScript. Cookie presence alone must not trigger a redirect.
 Invalid/revoked sessions or unavailable validation leave the public form accessible.
 
-Implement only the user's requested milestone. Invitations, business-resource authorization, non-identity collections,
-screening, DMA/CAR/Darvas calculations, portfolio accounting, imports, notification
-delivery, scheduled jobs, and cloud deployment remain deferred until requested.
+Implement only the user's requested milestone. Business-resource APIs, non-identity collections,
+screening, DMA/CAR/Darvas calculations, portfolio accounting, imports, trading
+notification delivery, scheduled jobs, and cloud deployment remain deferred until requested.
 Existing scaffold and landing-page maintenance do not require reapproving Phase 1.
 
 ## Requirements baseline
@@ -266,8 +268,48 @@ Frontend uses port 3000; Express uses port 4000. Browser calls use relative
 - The workspace Server Component forwards cookies to Express using a server-only
   fixed API origin and no-store fetch. Never grant access based on cookie existence
   or a client-side guard. Failed backend validation renders no private user content.
+- `requireAuthenticated` establishes request-scoped identity through the existing
+  live session lookup, including active User/Family checks. Use `authenticatedUser`
+  to read it; `response.locals`, headers, query and body identity are not proof of
+  authentication. `requireActiveAccount` and `requireAdmin` fail closed without
+  that context. Current roles are reloaded on each protected backend request.
+- Use `privateResourceScope` for future owner-constrained reads and writes, with
+  authorized parent IDs and family constraints where supported by the collection.
+  `authorizeOwnedResource` checks server-loaded metadata and gives Admin no
+  ownership bypass. Return 401 for invalid authentication, 403 for role denial,
+  and 404 for inaccessible private resources per the authoritative API Design.
+- Private pages call `requireCurrentUser` at the page/data boundary. A shared
+  layout alone does not protect child rendering or RSC payloads. Backend outages
+  render only unavailable feedback; framework redirects must propagate normally.
 - Never expose server configuration through `NEXT_PUBLIC_*` or log credentials,
   raw environment objects, request bodies, cookies, or private financial records.
+- Invitation contracts are recorded in `docs/adr/0001-family-invitations.md` as
+  explicitly approved amendments. Use the existing `/api/v1/invitations` routes,
+  POST verification/acceptance, and family-scoped Admin revoke/resend operations.
+  Sharing a CSRF context across auth and invitation routers is mandatory.
+- Invitation tokens are opaque 32-byte values, SHA-256 hashed, single use and valid
+  for exactly 72 hours. Registration derives family/email from the invitation,
+  always creates an ACTIVE MEMBER and never issues a session. Current family and
+  issuing Admin status are validated. Existing accounts are never transferred.
+- Resend creates a replacement row because token hashes remain immutable; old links
+  stop working. Keep persisted recipient cooldowns/quotas across replacements and
+  transactionally arbitrate acceptance versus revoke/resend. TTL is only cleanup.
+- Invitation retention uses purgeAt, 90 days after expiry. `invitations:prepare`
+  defaults to a dry-run, requires explicit --apply and refuses production. Never
+  drop unrelated indexes or run identity DDL from HTTP/startup. Login readiness is
+  independent of invitation index migration. See README for the operator workflow.
+- Resend delivery uses server-only RESEND_API_KEY/RESEND_FROM_EMAIL and WEB_ORIGIN.
+  RESEND_FROM_EMAIL is the canonical bare-address setting. Development uses
+  onboarding@resend.dev; the adapter adds the Advanced Darvas Box display name.
+  Production needs an address on a verified sender domain. Restart the backend
+  after local environment changes, and keep real provider sends separately approved.
+  Synchronous sending with persisted delivery states is the approved temporary
+  exception to the future outbox design. ACCEPTED means provider acceptance, not
+  inbox delivery. Never persist email bodies or recoverable invitation tokens.
+- Use fragment invitation links, remove the fragment after reading into memory,
+  send tokens only in JSON request bodies, and apply no-referrer on the acceptance
+  page. Do not add analytics or tracking to invitation links. All automated email
+  delivery must be mocked; test setup never returns tokens in API JSON responses.
 - Use dedicated development/test databases for authorized integration work. Do
   not run migrations, seed data, or perform writes against production implicitly.
 - Preserve generated request IDs, centralized errors, security headers, request
@@ -295,6 +337,14 @@ Frontend uses port 3000; Express uses port 4000. Browser calls use relative
   secure production attributes are tested separately. Optional E2E_WEB_PORT and
   E2E_API_PORT keep default 3000/4000; preserve unrelated processes. Local browser
   caches may be selected through PLAYWRIGHT_BROWSERS_PATH without committing paths.
+- Authorization fixtures in `apps/api/tests/authorization-fixture.ts` compose test
+  routes outside production server composition and builds. The test-only session
+  setup issues cookies for isolated synthetic identities, never tokens in JSON.
+  Never mount these routes in the real application or use them for manual sign-in.
+- Invitation fixtures add synthetic link setup and a fake email sender only in the
+  disposable test server. Cookie-context application instances isolate browser
+  rate-limit budgets, including SSR cookie forwarding, without changing production
+  limits. Keep that dispatcher under `apps/api/tests`, never production composition.
 - Production Playwright startup rebuilds the frontend under its selected
   API_INTERNAL_ORIGIN before `next start`. Keep build/start origins identical:
   changing only startup environment does not replace compiled rewrite destinations.

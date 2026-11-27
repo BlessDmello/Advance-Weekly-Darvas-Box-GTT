@@ -1,6 +1,12 @@
 import { createApp as sourceApp } from '../../apps/api/src/app.js';
 import { parseEnvironment } from '../../apps/api/src/config/env.js';
 import { startAuthFixture } from './mongo.js';
+import { createAuthorizationTestApp } from '../../apps/api/tests/authorization-fixture.js';
+import {
+  createInvitationTestApp,
+  invitationTestDependencies,
+  isolatedTestApplications,
+} from '../../apps/api/tests/invitation-fixture.js';
 
 // Deliberately no --env-file or application MongoDB environment loading.
 const fixture = await startAuthFixture();
@@ -14,16 +20,21 @@ const createApp: typeof sourceApp =
         }
       ).createApp
     : sourceApp;
-const app = createApp(
-  parseEnvironment({
-    NODE_ENV: 'test',
-    LOG_LEVEL: 'silent',
-    WEB_ORIGIN: `http://127.0.0.1:${webPort}`,
-    CSRF_SECRET: 'e'.repeat(64),
-  }),
-  fixture.runtime,
+const environment = parseEnvironment({
+  NODE_ENV: 'test',
+  LOG_LEVEL: 'silent',
+  WEB_ORIGIN: `http://127.0.0.1:${webPort}`,
+  CSRF_SECRET: 'e'.repeat(64),
+});
+const { app } = await createAuthorizationTestApp(
+  isolatedTestApplications(() =>
+    createApp(environment, fixture.runtime, invitationTestDependencies(fixture)),
+  ),
+  environment,
+  fixture,
+  process.env.E2E_PRODUCTION === '1',
 );
-const server = app.listen(port, '127.0.0.1');
+const server = createInvitationTestApp(app, fixture).listen(port, '127.0.0.1');
 let stopping = false;
 async function stop() {
   if (stopping) return;

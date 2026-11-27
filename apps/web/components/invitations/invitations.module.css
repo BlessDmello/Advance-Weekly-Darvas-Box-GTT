@@ -1,0 +1,56 @@
+.field {
+  display: grid;
+  gap: 0.5rem;
+  min-width: 0;
+}
+.field label {
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+.input {
+  width: 100%;
+  min-width: 0;
+  min-height: 50px;
+  border: 1px solid color-mix(in srgb, var(--landing-muted) 80%, var(--landing-card));
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  background: var(--landing-surface);
+  color: var(--landing-text);
+}
+.input:focus-visible {
+  outline: 2px solid var(--landing-accent);
+  outline-offset: 3px;
+}
+.input[aria-invalid='true'] {
+  border-color: #dc2626;
+}
+.error {
+  color: #b91c1c;
+  font-size: 0.875rem;
+}
+:global(.dark) .error {
+  color: #fca5a5;
+}
+.form {
+  display: grid;
+  gap: 1.25rem;
+}
+.form fieldset {
+  display: grid;
+  gap: 1.25rem;
+  min-width: 0;
+}
+.form button:focus-visible,
+.link:focus-visible {
+  outline: 2px solid var(--landing-accent);
+  outline-offset: 4px;
+}
+.link {
+  color: var(--landing-accent);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  border-radius: 4px;
+}
+.muted {
+  color: var(--landing-muted);
+}

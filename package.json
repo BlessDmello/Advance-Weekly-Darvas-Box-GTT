@@ -25,7 +25,8 @@
     "test:e2e": "pnpm build:packages && pnpm --filter @darvas/api build && playwright test",
     "test:auth-server": "pnpm --filter @darvas/api exec tsx ../../tests/support/auth-api-server.ts",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "invitations:prepare": "pnpm --filter @darvas/api... -r build && pnpm --filter @darvas/api invitations:prepare"
   },
   "devDependencies": {
     "@darvas/contracts": "workspace:*",

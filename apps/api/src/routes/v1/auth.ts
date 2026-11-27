@@ -1,20 +1,28 @@
 import { randomBytes } from 'node:crypto';
 import { loginInputSchema, publicUserSchema } from '@darvas/contracts';
-import cookieParser from 'cookie-parser';
 import { Router } from 'express';
 import type { ApiEnvironment } from '../../config/env.js';
 import type { AuthRuntime } from '../../modules/auth/types.js';
 import { authCookies, readSessionHash } from '../../modules/auth/cookies.js';
 import { AuthError, login } from '../../modules/auth/service.js';
-import { requireAuth } from '../../middleware/auth.js';
+import {
+  authenticatedUser,
+  requireAuthenticated,
+  requireActiveAccount,
+} from '../../middleware/auth.js';
 import { createCsrf } from '../../middleware/csrf.js';
 import { loginRateLimits } from '../../middleware/login-rate-limit.js';
 
-export function authRouter(environment: ApiEnvironment, runtime: AuthRuntime) {
+export function authRouter(
+  environment: ApiEnvironment,
+  runtime: AuthRuntime,
+  security?: { secret: string; csrf: ReturnType<typeof createCsrf> },
+) {
   const router = Router();
   const cookies = authCookies(environment);
-  const secret = environment.CSRF_SECRET ?? randomBytes(32).toString('base64url');
-  const csrf = createCsrf(environment, secret);
+  const secret =
+    security?.secret ?? environment.CSRF_SECRET ?? randomBytes(32).toString('base64url');
+  const csrf = security?.csrf ?? createCsrf(environment, secret);
   router.use((_request, _response, next) => {
     if (
       environment.NODE_ENV === 'production' &&
@@ -24,7 +32,6 @@ export function authRouter(environment: ApiEnvironment, runtime: AuthRuntime) {
     }
     next();
   });
-  router.use(cookieParser());
   router.get('/csrf', csrf.safeRead, csrf.bind, (request, response) => {
     response.json({ data: { csrfToken: csrf.generateCsrfToken(request, response) } });
   });
@@ -53,15 +60,21 @@ export function authRouter(environment: ApiEnvironment, runtime: AuthRuntime) {
       response.json({ data: { user: result.user } });
     },
   );
-  router.get('/me', requireAuth(environment, runtime), (_request, response) => {
-    response.json({ data: { user: publicUserSchema.parse(response.locals.authUser) } });
-  });
+  router.get(
+    '/me',
+    requireAuthenticated(environment, runtime),
+    requireActiveAccount,
+    (_request, response) => {
+      response.json({ data: { user: publicUserSchema.parse(authenticatedUser(response)) } });
+    },
+  );
   router.post(
     '/logout',
     csrf.checkOrigin,
     csrf.bind,
     csrf.protect,
-    requireAuth(environment, runtime),
+    requireAuthenticated(environment, runtime),
+    requireActiveAccount,
     async (request, response) => {
       const hash = readSessionHash(request, cookies.names.session)!;
       await (await runtime.repository()).revokeSession(hash);

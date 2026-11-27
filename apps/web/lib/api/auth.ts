@@ -1,7 +1,7 @@
 import { authErrorSchema, authProfileSchema, csrfResponseSchema } from '@darvas/contracts';
 
 export class AuthRequestError extends Error {}
-async function csrfToken(): Promise<string> {
+export async function csrfToken(): Promise<string> {
   const response = await fetch('/api/v1/auth/csrf', {
     credentials: 'same-origin',
     cache: 'no-store',

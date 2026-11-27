@@ -1,5 +1,6 @@
-import { randomUUID } from 'node:crypto';
+import { randomBytes, randomUUID } from 'node:crypto';
 import express from 'express';
+import cookieParser from 'cookie-parser';
 import { rateLimit } from 'express-rate-limit';
 import helmet from 'helmet';
 import { pinoHttp } from 'pino-http';
@@ -9,6 +10,10 @@ import { errorHandler, notFoundHandler, sendError } from './middleware/error-han
 import { healthRouter } from './routes/v1/health.js';
 import { authRouter } from './routes/v1/auth.js';
 import type { AuthRuntime } from './modules/auth/types.js';
+import type { InvitationDependencies } from './modules/invitations/types.js';
+import { invitationsRouter } from './routes/v1/invitations.js';
+import { createInvitationSender } from './modules/invitations/email.js';
+import { createCsrf } from './middleware/csrf.js';
 
 export function createApp(
   environment: ApiEnvironment,
@@ -17,6 +22,12 @@ export function createApp(
       throw new Error('Auth unavailable.');
     },
     close: async () => {},
+  },
+  invitations: InvitationDependencies = {
+    repository: async () => {
+      throw new Error('Invitations unavailable.');
+    },
+    sender: createInvitationSender(environment),
   },
 ) {
   const app = express();
@@ -55,8 +66,12 @@ export function createApp(
     }),
   );
   app.use(express.json({ limit: '32kb' }));
+  app.use(cookieParser());
   app.use('/api/v1', healthRouter);
-  app.use('/api/v1/auth', authRouter(environment, auth));
+  const secret = environment.CSRF_SECRET ?? randomBytes(32).toString('base64url');
+  const security = { secret, csrf: createCsrf(environment, secret) };
+  app.use('/api/v1/auth', authRouter(environment, auth, security));
+  app.use('/api/v1/invitations', invitationsRouter(environment, auth, invitations, security));
   app.use(notFoundHandler);
   app.use(errorHandler);
   return app;

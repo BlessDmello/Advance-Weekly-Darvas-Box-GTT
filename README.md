@@ -145,19 +145,19 @@ responsive sidebar/mobile navigation foundations live in the frontend.
 
 Each app loads its own file; the root `.env.example` is a reference, not an env loader.
 
-| Variable              | Location             | Current requirement                                                                   |
-| --------------------- | -------------------- | ------------------------------------------------------------------------------------- |
-| `API_INTERNAL_ORIGIN` | Web `.env.local`     | Defaults to `http://127.0.0.1:4000`; server-only rewrite target                       |
-| `NODE_ENV`            | API `.env` / process | `development`, `test`, or `production`                                                |
-| `HOST`                | API `.env`           | Defaults to `127.0.0.1`                                                               |
-| `PORT`                | API `.env`           | Defaults to `4000`                                                                    |
-| `WEB_ORIGIN`          | API `.env`           | Defaults to `http://localhost:3000`; reserved for future origin/CSRF policy           |
-| `LOG_LEVEL`           | API `.env`           | Defaults to `info`; structured Pino JSON                                              |
-| `MONGODB_URI`         | API `.env`           | Optional for startup; required for explicit `pnpm db:ping`; never commit the real URI |
-| `MONGODB_DB_NAME`     | API `.env`           | Set to `advanced_darvas_dev` for the explicit development ping                        |
-| `SESSION_SECRET`      | API `.env`, later    | Future authentication only                                                            |
-| `RESEND_API_KEY`      | API `.env`, later    | Future notifications only                                                             |
-| `RESEND_FROM`         | API `.env`, later    | Future verified email sender                                                          |
+| Variable              | Location             | Current requirement                                                                          |
+| --------------------- | -------------------- | -------------------------------------------------------------------------------------------- |
+| `API_INTERNAL_ORIGIN` | Web `.env.local`     | Defaults to `http://127.0.0.1:4000`; server-only rewrite target                              |
+| `NODE_ENV`            | API `.env` / process | `development`, `test`, or `production`                                                       |
+| `HOST`                | API `.env`           | Defaults to `127.0.0.1`                                                                      |
+| `PORT`                | API `.env`           | Defaults to `4000`                                                                           |
+| `WEB_ORIGIN`          | API `.env`           | Defaults to `http://localhost:3000`; reserved for future origin/CSRF policy                  |
+| `LOG_LEVEL`           | API `.env`           | Defaults to `info`; structured Pino JSON                                                     |
+| `MONGODB_URI`         | API `.env`           | Optional for startup; required for explicit `pnpm db:ping`; never commit the real URI        |
+| `MONGODB_DB_NAME`     | API `.env`           | Set to `advanced_darvas_dev` for the explicit development ping                               |
+| `SESSION_SECRET`      | API `.env`, later    | Future authentication only                                                                   |
+| `RESEND_API_KEY`      | API `.env`           | Server-only invitation email credential; optional for startup/health/login                   |
+| `RESEND_FROM_EMAIL`   | API `.env`           | Bare sender address; `onboarding@resend.dev` for development, verified domain for production |
 
 The browser uses relative `/api/v1` requests. Next.js rewrites them to Express,
 preserving the versioned path. Do not add server credentials to `NEXT_PUBLIC_*`.
@@ -251,8 +251,9 @@ and errors. Ctrl+C during prompts cancels before a connection is opened.
 
 Production bootstrap is refused; it requires separate approval and implementation.
 There is no production override flag. Do not run the live CLI as a test. The CLI
-does not issue a session. Public registration, reset and invitation acceptance
-remain unimplemented; no real account is created automatically.
+does not issue a session. Public registration and password reset remain deferred.
+New Members register only by accepting a valid family invitation; no account is
+created automatically.
 
 ## Local sign-in and sign-out
 
@@ -341,11 +342,51 @@ pnpm exec vitest run --project database-integration
 
 ## Scope and next milestone
 
-Deferred: invitation workflows, business-resource ownership enforcement, non-identity collections/indexes,
+Invitation creation/listing, token verification/acceptance, revocation and fresh-token
+resend are implemented. Admins use `/admin/invitations`; new members follow the
+emailed `/accept-invitation#token=...` link. Registration does not sign users in.
+
+Set optional server-only `RESEND_API_KEY` and `RESEND_FROM_EMAIL` in `apps/api/.env`.
+For development, set `RESEND_FROM_EMAIL=onboarding@resend.dev`. The email adapter adds
+the display name, producing `Advanced Darvas Box <onboarding@resend.dev>`; do not
+put the formatted display name inside the environment value. Use an address on a
+verified sender domain in production and disable open/click tracking in Resend. `WEB_ORIGIN`
+is the canonical application origin, HTTPS in production. A localhost invitation
+link can only be opened on that machine. No provider credential belongs in web env.
+Missing mail configuration keeps health/login working and safely disables sending.
+Restart the backend after changing its environment so it loads the new sender/key.
+All automated tests use synthetic keys and mocked email delivery. A manual provider
+test requires explicit approval and may use Resend's documented `delivered@resend.dev`
+recipient with generic content, without creating an invitation or account.
+
+Existing databases need explicit invitation index preparation before using the
+feature. The command is development-only and checks both database settings:
+
+```powershell
+pnpm invitations:prepare
+# Review the dry-run report, then explicitly apply the approved changes:
+pnpm invitations:prepare --apply
+```
+
+Preparation replaces expiry-time deletion with cleanup 90 days after expiry,
+backfills retention timestamps and creates the unique pending-invitation index.
+It refuses duplicate live pending invitations or unexpected TTL definitions. It
+does not create accounts, send email, run at startup or drop unrelated indexes.
+Production preparation is refused. Login does not depend on invitation readiness.
+
+Invitation links expire after 72 hours. Resend invalidates the old link and creates
+a new one; a persisted 60-second cooldown and three sends per recipient/family per
+day apply. Delivery is synchronous: provider acceptance is not inbox delivery.
+Failed/unconfirmed sends require explicit Admin recovery; there is no durable
+background outbox yet. Reopen the original email after reloading the acceptance
+page because the token is deliberately kept only in memory. See
+[the approved Stage 5 amendments](docs/adr/0001-family-invitations.md).
+
+Deferred: business-resource APIs and their ownership integration, non-identity collections/indexes,
 CSV/XLSX import, screening, DMA/CAR/Darvas calculations, portfolio accounting,
 notifications, scheduled jobs, live feeds, cloud deployment, and broker automation.
 
-Recommended next milestone: invitation lifecycle and business-resource tenancy,
+Recommended next milestone: agree on the next business-resource scope and tenancy,
 with a production same-origin cookie/CSRF deployment review before deployment.
 Resolve the documented precision, source-fixture, and collection-inventory questions
 before implementing persistence or strategy algorithms. The approved specifications

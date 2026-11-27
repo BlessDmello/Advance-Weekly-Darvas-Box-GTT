@@ -8,6 +8,8 @@ const environmentSchema = z.object({
   WEB_ORIGIN: z.url().default('http://localhost:3000'),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
   CSRF_SECRET: z.string().min(43).max(256).optional(),
+  RESEND_API_KEY: z.string().min(1).optional(),
+  RESEND_FROM_EMAIL: z.email().optional(),
 });
 
 export type ApiEnvironment = z.infer<typeof environmentSchema>;

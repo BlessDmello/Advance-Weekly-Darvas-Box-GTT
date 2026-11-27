@@ -38,6 +38,8 @@ export const authErrorCodeSchema = z.enum([
   'VALIDATION_ERROR',
   'INVALID_CREDENTIALS',
   'UNAUTHORIZED',
+  'FORBIDDEN',
+  'NOT_FOUND',
   'CSRF_INVALID',
   'RATE_LIMITED',
   'AUTH_UNAVAILABLE',

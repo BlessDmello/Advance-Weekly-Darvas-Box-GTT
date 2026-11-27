@@ -7,6 +7,9 @@ export { prepareAuthStorage, verifyAuthStorage } from './auth-indexes.js';
 export { createInitialAdmin, BootstrapError } from './bootstrap.js';
 export type { InitialAdminRecord } from './bootstrap.js';
 export { isInvitationValid, isSessionValid } from './auth-validity.js';
+export { createInvitationRepository, InvitationStorageError } from './invitation-repository.js';
+export type { InvitationRepository } from './invitation-repository.js';
+export { prepareInvitationStorage, verifyInvitationStorage } from './invitation-storage.js';
 
 const databaseConfigSchema = z.object({
   uri: z.string().regex(/^mongodb(?:\+srv)?:\/\//),

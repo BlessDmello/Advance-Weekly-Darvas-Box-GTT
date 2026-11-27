@@ -21,8 +21,12 @@ export async function prepareAuthStorage(connection: Connection): Promise<void> 
   await assertAuthIndexes(models);
 }
 
-export async function assertAuthIndexes(models: AuthModels): Promise<void> {
-  for (const model of Object.values(models)) {
+export async function assertAuthIndexes(
+  models: AuthModels,
+  includeInvitations = true,
+): Promise<void> {
+  for (const [name, model] of Object.entries(models)) {
+    if (!includeInvitations && name === 'Invitation') continue;
     const actual = await model.listIndexes();
     for (const [key, options] of model.schema.indexes()) {
       const index = actual.find((candidate) => candidate.name === options.name);
@@ -42,5 +46,6 @@ export async function assertAuthIndexes(models: AuthModels): Promise<void> {
 
 /** Read-only readiness check. API requests must never provision identity storage. */
 export async function verifyAuthStorage(connection: Connection): Promise<void> {
-  await assertAuthIndexes(createAuthModels(connection));
+  // Login readiness is independent of a later invitation index migration.
+  await assertAuthIndexes(createAuthModels(connection), false);
 }

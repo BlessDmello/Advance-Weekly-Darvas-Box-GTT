@@ -214,7 +214,10 @@ describe('real MongoDB identity constraints and atomic bootstrap', () => {
     for (const model of [Session, Invitation]) {
       expect(await model.listIndexes()).toEqual(
         expect.arrayContaining([
-          expect.objectContaining({ key: { expiresAt: 1 }, expireAfterSeconds: 0 }),
+          expect.objectContaining({
+            key: model.modelName === 'Session' ? { expiresAt: 1 } : { purgeAt: 1 },
+            expireAfterSeconds: 0,
+          }),
         ]),
       );
     }

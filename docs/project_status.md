@@ -1,7 +1,7 @@
 # Advanced Darvas Box — Project Status
 
 - **Last updated:** 27 November 2026 (Asia/Kolkata)
-- **Current milestone:** Milestone 7A Main Dashboard UI implemented and locally verified; Milestones 6/7A remain uncommitted; business data integration and production readiness remain pending
+- **Current milestone:** Milestones 6 and 7A implemented, locally verified, committed and pushed to origin/dev; business data integration and production readiness remain pending
 - **Overall state:** Frontend foundation complete; business features and deployment pending
 
 This is the living implementation-status record. Requirements remain in the four
@@ -79,6 +79,21 @@ and verification accurately rather than treating planned features as implemented
   weekly trigger values are mock presentation content, not calculations.
 - The landing content and layout remain preserved; its two Sign In actions open
   `/login`. Stage 3 changes auth behavior only; no trading dashboard is implemented.
+
+## Shell and Dashboard Git delivery — 27 November 2026
+
+- Committed the reviewed Milestone 6 application shell and Milestone 7A Dashboard UI
+  as `59e664c` (`feat: add authenticated application shell and dashboard UI`) and
+  pushed to `origin/dev`. GitHub's remote branch hash matched the local commit.
+- Reviewed all 26 staged paths, scoped diffs, credential patterns and whitespace.
+  Root formatting and diff checks passed. Actual environment files, local tools,
+  generated outputs and test reports were excluded. The four approved specifications,
+  backend, shared packages and public pages remain unchanged; `main` was untouched.
+- No application code changed during delivery. The earlier 27 November results
+  remain the evidence: 255 Vitest tests across 35 files, 64 compiled Playwright
+  tests, TypeScript, ESLint and production build passed. These application checks
+  were not rerun solely for Git delivery. No deployment or remote CI success is
+  claimed; a direct `dev` push does not trigger the current workflow.
 
 ## Milestone 7A Main Dashboard UI — 27 November 2026
 
@@ -783,6 +798,7 @@ authorize starting another milestone or deploying the application.
 | 27 November 2026    | Stage 4/5 and Resend work committed as d6f8346 and pushed to origin/dev; GitHub branch hash verified; reviewed 59 staged paths and secret/whitespace checks passed; main and local environment unchanged; no deployment or remote CI claim                                    |
 | 27 November 2026    | Milestone 6 authenticated shell implemented: 250 Vitest tests, 60 full compiled browser checks plus 2 More-sheet Logout checks passed; role-aware navigation, responsive/keyboard/theme checks verified; no backend changes, Atlas writes, real email, commit or push         |
 | 27 November 2026    | Milestone 7A unavailable-state Dashboard UI implemented: 255 Vitest tests across 35 files, 64 compiled Playwright tests, typecheck/lint/build passed; both roles and all requested viewports/themes verified; no APIs, dependencies, Atlas writes, real email or Git delivery |
+| 27 November 2026    | Milestones 6/7A committed as 59e664c and pushed to origin/dev; remote hash verified, 26 staged paths and credential/format/diff checks passed; main unchanged, no deployment or remote CI claim                                                                               |
 
 Keep this history concise. Replace stale current-state statements when work ships;
 retain only useful milestone evidence and unresolved decisions. Never record secrets

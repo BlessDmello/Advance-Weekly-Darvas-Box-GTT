@@ -1,7 +1,7 @@
 # Advanced Darvas Box — Project Status
 
 - **Last updated:** 28 November 2026 (Asia/Kolkata)
-- **Current milestone:** Phase 8D-2B bounded transactional import runner implemented and locally verified; authorized delivery to origin/dev is in progress. Execution and startup recovery remain separately opt-in. Phase 8E is discovery-only and is not implemented
+- **Current milestone:** Phase 8D-2B bounded transactional import runner implemented, locally verified and delivered to origin/dev. Execution and startup recovery remain separately opt-in. Phase 8E is discovery-only and is not implemented
 - **Overall state:** Frontend foundation complete; business features and deployment pending
 
 This is the living implementation-status record. Requirements remain in the four
@@ -9,7 +9,7 @@ approved specifications; working conventions remain in [AGENTS.md](../AGENTS.md)
 Update this file with each project change. Describe completed work, pending work,
 and verification accurately rather than treating planned features as implemented.
 
-## Phase 8D-2B delivery review — 28 November 2026
+## Phase 8D-2B delivery — 28 November 2026
 
 - User authorized committing and pushing the existing verified Phase 8D-2B work.
   Reviewed all 35 pending implementation/documentation paths on dev. The fetched
@@ -21,9 +21,14 @@ and verification accurately rather than treating planned features as implemented
   across 56 files, 70 compiled Playwright tests, TypeScript, zero-warning ESLint,
   production build and formatting. Application code has not changed since that
   verification; application checks are not rerun for this Git/documentation task.
-- Commit/push outcome is pending. No Atlas operation, migration, real market data,
-  email or deployment is part of this delivery. Phase 8E has only a discovery report;
-  its UI and the stock-universe decision still require implementation approval.
+- Committed the 35 reviewed paths as `3e3e875`
+  (`feat: add bounded transactional market import runner`) and pushed to origin/dev.
+  GitHub's dev branch hash matched the full local implementation commit hash after
+  the push. This documentation follow-up records the observed delivery.
+- No Atlas operation, migration, real market data, email or deployment occurred.
+  Phase 8E has only a discovery report; its UI and stock-universe decision still
+  require implementation approval. Direct dev pushes do not trigger the current
+  main/PR CI workflow; no remote CI success is claimed.
 
 ## Phase 8D-2B transactional runner — 28 November 2026
 
@@ -77,8 +82,8 @@ and verification accurately rather than treating planned features as implemented
   specifications and all frontend source remain unchanged; generated Next
   references were restored. Task-owned servers/disposable databases stopped,
   no listeners remained on 3000/3001/4000/4001, and the pre-existing MongoDB process
-  was preserved. All 35 changed paths remain uncommitted on dev; no remote CI
-  result is claimed.
+  was preserved. The 35 paths were uncommitted at implementation verification;
+  their subsequent delivery is recorded above. No remote CI result is claimed.
 
 ### Phase 8D-2B file manifest
 
@@ -1155,8 +1160,9 @@ authorize starting another milestone or deploying the application.
 | 28 November 2026    | Phase 8D-1 secure preview/confirmation and read APIs implemented; 469 Vitest and 70 compiled Playwright tests passed with TypeScript/lint/build/format/diff checks. Queued jobs cannot execute; no Atlas use, real mail, commit or push                                                        |
 | 28 November 2026    | Phase 8D-2A generation storage/readers/publication foundations and dry-run offline migration completed; 513 Vitest tests across 52 files, 70 compiled Playwright tests, typecheck/lint/build/format/diff passed. Runner remains deferred; no Atlas access, dependencies, email, commit or push |
 | 28 November 2026    | Phases 8D-1/8D-2A committed as 19ec655 and pushed to origin/dev; remote hash verified, 55 staged paths passed scope/credential/format/diff checks; prior 513 Vitest and 70 compiled browser results retained as dated evidence; main unchanged, no deployment or remote CI claim               |
+| 28 November 2026    | Phase 8D-2B transactional runner, retry/resume and safe staging retirement implemented; 537 Vitest tests across 56 files and 70 compiled Playwright tests passed, with TypeScript/lint/build. No Atlas, real data/email, commit, push or deployment.                                           |
+| 28 November 2026    | Delivered the 35 reviewed Phase 8D-2B paths as 3e3e875 to origin/dev; GitHub branch hash verified. Delivery formatting, staged diff and credential-pattern checks passed; existing 537 Vitest / 70 compiled Playwright results retained as dated evidence. No deployment or Atlas operation.   |
 
 Keep this history concise. Replace stale current-state statements when work ships;
 retain only useful milestone evidence and unresolved decisions. Never record secrets
 or claim approval, test success, commits, pushes, or deployments without evidence.
-| 28 November 2026 | Phase 8D-2B transactional runner, retry/resume and safe staging retirement implemented; 537 Vitest tests across 56 files and 70 compiled Playwright tests passed, with TypeScript/lint/build. No Atlas, real data/email, commit, push or deployment. |

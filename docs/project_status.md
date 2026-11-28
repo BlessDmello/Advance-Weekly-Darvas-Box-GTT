@@ -1,7 +1,7 @@
 # Advanced Darvas Box — Project Status
 
 - **Last updated:** 28 November 2026 (Asia/Kolkata)
-- **Current milestone:** Phase 8E Admin Market Data Import UI implemented and locally verified, including a complete 78/78 compiled Playwright pass; reviewed for authorized delivery from dev to origin/dev. Phase 8D-2B is delivered to origin/dev. Execution and startup recovery remain separately opt-in
+- **Current milestone:** Phase 8E Admin Market Data Import UI implemented, locally verified and delivered to origin/dev in 63571fa, including a complete 78/78 compiled Playwright pass. Phase 8F discovery is complete; implementation awaits approval. Execution and startup recovery remain separately opt-in
 - **Overall state:** Frontend foundation complete; business features and deployment pending
 
 This is the living implementation-status record. Requirements remain in the four
@@ -21,7 +21,12 @@ and verification accurately rather than treating planned features as implemented
   files, local tools, build output and browser reports remain ignored and excluded.
 - Phase 8F remains read-only discovery with implementation awaiting approval. No
   Atlas access, reference seeding, real email, runner enablement or deployment.
-  Remote delivery confirmation will be recorded after the push succeeds.
+- Successfully committed all 24 reviewed files as `63571fa` and pushed dev to
+  origin/dev on 28 November. Root `pnpm format:check` and staged whitespace checks
+  passed during delivery. No application files changed after their verified run.
+- The workflow currently runs on main pushes and pull requests, not a direct dev
+  push. No remote CI result or deployment is claimed. This follow-up records the
+  confirmed delivery outcome in project status.
 
 ## Phase 8E complete compiled Playwright closeout — 28 November 2026
 

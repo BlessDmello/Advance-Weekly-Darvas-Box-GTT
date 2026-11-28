@@ -1,7 +1,7 @@
 # Advanced Darvas Box — Project Status
 
 - **Last updated:** 28 November 2026 (Asia/Kolkata)
-- **Current milestone:** Phase 8D-2A versioned storage, published readers, explicit migration and publication foundations implemented and locally verified. Phase 8D-1/8D-2A work remains uncommitted. Queued imports still cannot execute; runner implementation requires separate approval
+- **Current milestone:** Phase 8D-1/8D-2A import APIs, versioned storage, published readers, explicit migration and publication foundations implemented, locally verified and delivered to origin/dev. Queued imports still cannot execute; runner implementation requires separate approval
 - **Overall state:** Frontend foundation complete; business features and deployment pending
 
 This is the living implementation-status record. Requirements remain in the four
@@ -82,6 +82,25 @@ and verification accurately rather than treating planned features as implemented
   weekly trigger values are mock presentation content, not calculations.
 - The landing content and layout remain preserved; its two Sign In actions open
   `/login`. Stage 3 changes auth behavior only; no trading dashboard is implemented.
+
+## Phase 8D-1/8D-2A Git delivery — 28 November 2026
+
+- Committed the 55 reviewed implementation/documentation paths as `19ec655`
+  (`feat: add secure import APIs and versioned market storage`) and pushed to
+  `origin/dev`. GitHub's branch hash matched the full local implementation commit
+  hash after the push. This documentation follow-up records the observed delivery.
+- Delivery review passed root/ADR formatting, staged whitespace, path-scope and
+  credential-pattern checks. Actual environment files, local tools, generated output
+  and test reports were excluded. Frontend source and the four approved specifications
+  remain unchanged; `main` was not modified.
+- The preceding implementation verification remains **513 passing Vitest tests
+  across 52 files**, **70 compiled Playwright tests**, TypeScript, zero-warning ESLint
+  and production build, all dated 28 November 2026. Delivery changes status
+  documentation only; application tests were not rerun for this Git operation.
+- No Atlas operation, migration, reference seeding, real email or deployment occurred.
+  Queued imports remain non-executable pending a separately approved runner milestone.
+  Direct dev pushes do not trigger the current main/PR CI workflow; no remote CI
+  success is claimed.
 
 ## Phase 8D-2A generation storage foundations — 28 November 2026
 
@@ -1018,6 +1037,7 @@ authorize starting another milestone or deploying the application.
 | 27 November 2026    | Phases 8B/8C committed as 1241ebb and pushed to origin/dev; remote hash verified, 49 staged paths passed scope/credential-pattern/format/diff review; implementation's 425 tests and 64 compiled regressions retained as dated evidence; main unchanged, no deployment or remote CI claim      |
 | 28 November 2026    | Phase 8D-1 secure preview/confirmation and read APIs implemented; 469 Vitest and 70 compiled Playwright tests passed with TypeScript/lint/build/format/diff checks. Queued jobs cannot execute; no Atlas use, real mail, commit or push                                                        |
 | 28 November 2026    | Phase 8D-2A generation storage/readers/publication foundations and dry-run offline migration completed; 513 Vitest tests across 52 files, 70 compiled Playwright tests, typecheck/lint/build/format/diff passed. Runner remains deferred; no Atlas access, dependencies, email, commit or push |
+| 28 November 2026    | Phases 8D-1/8D-2A committed as 19ec655 and pushed to origin/dev; remote hash verified, 55 staged paths passed scope/credential/format/diff checks; prior 513 Vitest and 70 compiled browser results retained as dated evidence; main unchanged, no deployment or remote CI claim               |
 
 Keep this history concise. Replace stale current-state statements when work ships;
 retain only useful milestone evidence and unresolved decisions. Never record secrets

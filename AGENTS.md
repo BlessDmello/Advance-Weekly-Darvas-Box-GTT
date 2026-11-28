@@ -109,7 +109,8 @@ Existing scaffold and landing-page maintenance do not require reapproving Phase 
 Phase 8B adds market-data contracts and the seven market/import model definitions;
 Phase 8C adds bounded, backend-only CSV/XLSX parsing and validation. Phase 8D-1 adds
 Admin preview/confirmation, family-scoped job/batch reads and active-member stock
-lookup. Daily-price/revision processing, reference seeding, a runner and UI remain deferred. See
+lookup. Phase 8D-2B adds bounded transactional price execution and explicit recovery;
+reference seeding and import UI remain deferred. See
 `docs/adr/0002-market-data-import-foundation.md` for additive storage decisions.
 `createMarketModels` only registers models. `verifyMarketStorage` is read-only;
 `prepareMarketStorage` is explicit and dry-run by default. The development-only
@@ -137,9 +138,9 @@ Keep preview capabilities hashed in storage and scoped to actor/family. Confirma
 verifies every durable chunk, rechecks approvals/revision, and creates the batch/job
 and removes all staging TTL deadlines in one transaction. Only a technical Stock.__v
 fence changes; publication fields and dataset revisions remain untouched in 8D-1.
-Queued imports cannot execute yet and must retain their payload. No HTTP route may
+Queued imports retain attached payloads until successful completion. No HTTP route may
 seed references or create indexes/validators. Explicit preparation recognizes only
-the known additive Phase 8B preview-context validator upgrade; arbitrary drift fails
+the known additive preview-context and execution-metadata validator upgrades; arbitrary drift fails
 closed. The E2E import reference helper is disposable startup-only test code, excluded
 from production, and must never be used to populate Atlas or manual development data.
 
@@ -152,9 +153,20 @@ in a single snapshot, checks complete content integrity and never falls back to
 candidates. Candidate planning preserves unaffected history. Published generations
 are immutable and never pruned automatically. Price publication remains explicitly
 ineligible for screening, including stale/raw/short-history data with warnings.
-Generation repository primitives require an already established live lease/fence
-and verified confirmed payload; they do not claim jobs or execute/write price chunks.
-Keep runner/coordinator, retry/resume, scheduler and staging retirement deferred.
+Generation repository primitives require a live lease/fence and verified confirmed
+payload. Phase 8D-2B uses createImportRunnerRepository for claims, checkpoint-fenced
+100-row maximum transactional chunks/audits, final publication and completed-payload
+retirement. See ADR 0005. Reuse the connection owner; runtime readiness remains
+read-only. IMPORT_RUNNER_ENABLED defaults false; IMPORT_RUNNER_RESUME_ON_STARTUP is separately
+opt-in. Never execute queued development jobs as part of tests or ordinary startup.
+Automatic recovery is bounded and persisted; explicit Admin retry is family-scoped,
+CSRF-protected and UUID-idempotent. Unknown commit outcomes require durable reads
+before further writes. Keep operations sequential in transactions, preserve exact
+decimals, and never mutate published prices/private trading data. RETRY payloads
+have no TTL. Only successful completion permits seven-day staging retirement.
+Use `pnpm imports:resume --job <jobId>` for inspection; mutation requires --apply
+and runs one bounded development-only slice. Do not run it against Atlas during
+automated tests. Scheduler, pruning, market UI and strategy execution stay deferred.
 The offline market-data:migrate-generations command is dry-run-first and development
 only; --apply additionally needs --offline-confirmed and --backup-confirmed. These
 attestations do not create or verify a backup. Only this explicit migration may

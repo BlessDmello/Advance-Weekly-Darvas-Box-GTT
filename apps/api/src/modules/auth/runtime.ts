@@ -7,6 +7,7 @@ import {
   createInvitationRepository,
   verifyInvitationStorage,
   createMarketRepository,
+  createImportRunnerRepository,
   verifyMarketStorage,
 } from '@darvas/database';
 import type { DatabaseConnection } from '@darvas/database';
@@ -14,6 +15,7 @@ import type { AuthRuntime } from './types.js';
 
 export function createAuthRuntime(environment: Record<string, string | undefined>): AuthRuntime & {
   invitationRepository(): Promise<ReturnType<typeof createInvitationRepository>>;
+  runnerRepository(): Promise<ReturnType<typeof createImportRunnerRepository>>;
   marketRepository(): Promise<ReturnType<typeof createMarketRepository>>;
 } {
   // Called by server composition only; no import-time connection or automatic DDL.
@@ -57,6 +59,10 @@ export function createAuthRuntime(environment: Record<string, string | undefined
       });
       await marketVerified;
       return createMarketRepository(connection);
+    },
+    async runnerRepository() {
+      await this.marketRepository();
+      return createImportRunnerRepository(await database());
     },
     async close() {
       closing = true;

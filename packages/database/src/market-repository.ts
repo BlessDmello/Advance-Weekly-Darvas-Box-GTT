@@ -8,6 +8,7 @@ import { readPublishedPrices } from './published-prices.js';
 import type { ClientSession, Connection } from 'mongoose';
 import {
   IMPORT_LIMITS,
+  importQualitySchema,
   importPreviewMetadataSchema,
   importBatchMetadataSchema,
   importJobRecordSchema,
@@ -131,8 +132,28 @@ export function createMarketRepository(connection: Connection) {
       dataHash: marketFingerprint({ stock: stockReferenceFingerprint(stock), calendar }),
     };
   }
+  function executionDto(job: ImportJobRecord) {
+    return {
+      quality: job.generation?.assessment
+        ? importQualitySchema.strip().parse(job.generation.assessment)
+        : null,
+      recovery: {
+        retryAllowed:
+          (['QUEUED', 'RETRY'].includes(job.status) ||
+            (job.status === 'RUNNING' && Date.parse(job.leaseUntil!) <= Date.now())) &&
+          job.attempts < 100 &&
+          (job.execution?.receipts.length ?? 0) < 100 &&
+          !job.execution?.retiredAt,
+        blocked: job.execution?.blocked ?? false,
+        automaticRecoveries: job.execution?.autoRecoveries ?? 0,
+        nextAttemptAt: job.execution?.nextAttemptAt ?? null,
+        payloadRetired: !!job.execution?.retiredAt,
+      },
+    };
+  }
   function jobDto(job: ImportJobRecord, jobId: string) {
     return {
+      ...executionDto(job),
       jobId,
       batchId: job.importBatchId,
       status: publicImportJobStatus(job),
@@ -502,6 +523,7 @@ export function createMarketRepository(connection: Connection) {
           const job = jobs.find((entry) => String(entry.get('importBatchId')) === document.id);
           if (!job) throw new MarketStorageError('PREVIEW_INVALID');
           return {
+            ...executionDto(importJobRecordSchema.parse(recordInput(job))),
             batchId: document.id as string,
             jobId: job.id as string,
             stockId: batch.stockId,

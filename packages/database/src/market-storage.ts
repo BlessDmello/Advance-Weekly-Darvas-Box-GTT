@@ -30,6 +30,15 @@ function withoutPreviewContext(value: unknown): unknown {
     ]),
   );
 }
+function withoutExecution(value: unknown): unknown {
+  const validator = structuredClone(value) as {
+    $and: [{ $jsonSchema: { properties: Record<string, unknown>; required: string[] } }];
+  };
+  const schema = validator.$and[0].$jsonSchema;
+  delete schema.properties.execution;
+  schema.required = schema.required.filter((key) => key !== 'execution');
+  return validator;
+}
 export async function inspectMarketStorage(connection: Connection) {
   if (!connection.db) throw new Error('Market database connection is not ready.');
   const missingCollections: string[] = [];
@@ -46,9 +55,11 @@ export async function inspectMarketStorage(connection: Connection) {
     const options = 'options' in info ? info.options : undefined;
     const current = options?.validator;
     const knownLegacy =
-      ['importBatches', 'importStaging'].includes(name) &&
       current &&
-      canonical(current) === canonical(withoutPreviewContext(marketValidators[name]));
+      ((['importBatches', 'importStaging'].includes(name) &&
+        canonical(current) === canonical(withoutPreviewContext(marketValidators[name]))) ||
+        (name === 'importJobs' &&
+          canonical(current) === canonical(withoutExecution(marketValidators.importJobs))));
     if (
       current &&
       Object.keys(current).length > 0 &&

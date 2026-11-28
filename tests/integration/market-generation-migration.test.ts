@@ -89,6 +89,7 @@ async function legacy() {
   const job = new (models().ImportJob)(syntheticJob());
   const data = job.toObject({ transform: false });
   Reflect.deleteProperty(data, 'generation');
+  Reflect.deleteProperty(data, 'execution');
   await models().ImportJob.collection.insertOne({
     ...data,
     createdAt: new Date(),

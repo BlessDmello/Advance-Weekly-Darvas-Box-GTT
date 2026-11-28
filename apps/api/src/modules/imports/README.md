@@ -1,11 +1,11 @@
-# Market-data imports — Phases 8B through 8D-1
+# Market-data imports — Phases 8B through 8D-2B
 
 Phase 8D-1 adds `service.ts`, `upload.ts` and the routes in `routes/v1/imports.ts`.
 They reuse the parser, shared security context, owned database connection and explicit
 market-storage readiness. See [ADR 0003](../../../../../docs/adr/0003-import-preview-and-confirmation.md)
 for request/response fields, reference approvals, staging and atomic confirmation.
 All import writes are Admin-scoped; stock lookup follows the API Design's active-member
-access. There is no import UI. **Queued jobs cannot execute in this phase.**
+access. There is no import UI. The Phase 8D-2B runner is opt-in; default execution remains disabled.
 
 `parsing/parser.ts` exports `parseMarketFile(file, options, calendar)`, a backend-only,
 bounded worker facade. The parser itself has no database connection, job runner or
@@ -137,6 +137,21 @@ Alternative CSV encodings/delimiters, localized dates, scientific-number lexemes
 strict OOXML, additional sheets/parts and separate raw/adjusted column sets are
 unsupported. They require explicit compatibility work, not automatic guessing.
 The parser does not write staged data or prices. Phase 8D-1 services compare existing
-rows exactly, stage bounded previews and queue jobs transactionally. Price/revision
-writes, execution/recovery, seeding, UI and strategy calculations remain deferred.
+rows exactly, stage bounded previews and queue jobs transactionally. Phase 8D-2B adds
+price/revision execution and recovery. Seeding, UI and strategy calculations remain deferred.
 Preserve ADRs 0002/0003 and the four approved specifications.
+
+## Phase 8D-2B execution
+
+The opt-in in-process runner in `runner.ts` reuses the generation planner and
+database repository. It processes only confirmed durable jobs. Defaults: 100 output
+rows per transaction, 60-second renewable lease, 20-second cooperative slices and
+five automatic recoveries. Execution and startup recovery are separately opt-in;
+ordinary startup never claims existing jobs by default. See ADR 0005 for controls,
+retry API, operator resume, transaction bounds and operational limitations.
+
+Every price chunk and audit checkpoint is atomic and fenced. Unknown commit results
+are resolved from durable state; no external side effects occur in callbacks.
+Publication revalidates full candidate content and references. Only completed jobs
+retire staging for seven-day TTL cleanup. Active/retry payloads remain attached.
+No UI, strategy, scheduler, pruning or real reference-data seeding is implemented.

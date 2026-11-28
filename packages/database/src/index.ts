@@ -25,6 +25,8 @@ export { migrateMarketGenerations } from './market-generation-migration.js';
 export { legacyMarketValidators } from './market-validators.js';
 export { createGenerationRepository } from './market-generations.js';
 export type { GenerationFence } from './market-generations.js';
+export { createImportRunnerRepository, importCheckpoint } from './import-runner-repository.js';
+export type { ImportRunnerRepository } from './import-runner-repository.js';
 export {
   planCandidateGeneration,
   generationCapacity,

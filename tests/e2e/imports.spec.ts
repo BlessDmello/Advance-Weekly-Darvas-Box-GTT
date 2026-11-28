@@ -49,8 +49,16 @@ test('Member with valid CSRF can read stock lookup but cannot preview or confirm
     ).status(),
   ).toBe(403);
   expect((await request.get('/api/v1/imports/batches')).status()).toBe(403);
+  expect(
+    (
+      await request.post(`/api/v1/imports/jobs/${'a'.repeat(24)}/retry`, {
+        headers: { ...headers, 'Idempotency-Key': randomUUID() },
+        data: { reason: 'Synthetic retry' },
+      })
+    ).status(),
+  ).toBe(403);
 });
-test('Admin previews and confirms a queued price-only import through the compiled proxy', async ({
+test('Admin previews, confirms and executes a price-only import through the compiled proxy', async ({
   request,
   baseURL,
   browser,
@@ -108,16 +116,28 @@ test('Admin previews and confirms a queued price-only import through the compile
   const result = await confirm();
   expect(result.status()).toBe(202);
   const queued = (await result.json()).data;
-  expect(queued).toMatchObject({ status: 'QUEUED', executionAvailable: false });
-  expect(await (await confirm()).json()).toEqual({ data: queued });
+  expect(queued).toMatchObject({ status: 'QUEUED', executionAvailable: true });
+  expect((await (await confirm()).json()).data).toMatchObject({
+    jobId: queued.jobId,
+    batchId: queued.batchId,
+  });
+  await expect
+    .poll(
+      async () =>
+        (await (await request.get(`/api/v1/imports/jobs/${queued.jobId}`)).json()).data.status,
+      { timeout: 30_000, intervals: [1000] },
+    )
+    .toBe('COMPLETED');
   const job = await request.get(`/api/v1/imports/jobs/${queued.jobId}`);
   expect(job.status()).toBe(200);
   expect(job.headers()['cache-control']).toBe('no-store');
   expect((await job.json()).data).toMatchObject({
-    processed: 0,
+    processed: 3,
     total: 3,
-    status: 'QUEUED',
+    status: 'COMPLETED',
     derivedStatus: 'DEFERRED',
+    quality: { screeningEligible: false },
+    recovery: { retryAllowed: false },
   });
   const batches = await request.get('/api/v1/imports/batches?limit=1');
   expect(batches.status()).toBe(200);
@@ -126,6 +146,15 @@ test('Admin previews and confirms a queued price-only import through the compile
   try {
     await other.request.post('/api/v1/__test/session', { data: { role: 'ADMIN' } });
     expect((await other.request.get(`/api/v1/imports/jobs/${queued.jobId}`)).status()).toBe(404);
+    const otherCsrf = (await (await other.request.get('/api/v1/auth/csrf')).json()).data.csrfToken;
+    expect(
+      (
+        await other.request.post(`/api/v1/imports/jobs/${queued.jobId}/retry`, {
+          headers: { Origin: baseURL!, 'X-CSRF-Token': otherCsrf, 'Idempotency-Key': randomUUID() },
+          data: { reason: 'Synthetic retry' },
+        })
+      ).status(),
+    ).toBe(404);
     expect((await other.request.get('/api/v1/imports/batches')).status()).toBe(200);
     expect((await (await other.request.get('/api/v1/imports/batches')).json()).data).toEqual([]);
   } finally {

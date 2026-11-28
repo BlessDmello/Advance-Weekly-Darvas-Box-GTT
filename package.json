@@ -9,6 +9,7 @@
     "pnpm": "12.23.0"
   },
   "scripts": {
+    "imports:resume": "pnpm --filter @darvas/api... -r build && pnpm --filter @darvas/api imports:resume",
     "market-data:migrate-generations": "pnpm --filter @darvas/api... -r build && pnpm --filter @darvas/api market-data:migrate-generations",
     "market-data:prepare": "pnpm --filter @darvas/api... -r build && pnpm --filter @darvas/api market-data:prepare",
     "admin:bootstrap": "pnpm --filter @darvas/api... -r build && pnpm --filter @darvas/api admin:bootstrap",

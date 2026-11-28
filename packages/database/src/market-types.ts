@@ -10,6 +10,9 @@ type ReferenceKey =
   | 'importBatchId'
   | 'changedBy';
 type DateKey =
+  | 'nextAttemptAt'
+  | 'retiredAt'
+  | 'acceptedAt'
   | 'assessedAt'
   | 'declaredAt'
   | 'expiresAt'

@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "imports:resume": "node --env-file=.env dist/cli/imports-resume.js",
     "market-data:migrate-generations": "node --env-file=.env dist/cli/market-generations-migrate.js",
     "market-data:prepare": "node --env-file=.env dist/cli/market-data-prepare.js",
     "admin:bootstrap": "node --env-file=.env dist/cli/admin-bootstrap.js",

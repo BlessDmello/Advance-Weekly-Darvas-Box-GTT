@@ -351,6 +351,7 @@ function removeProperty(name: string, key: string) {
 removeProperty('dailyPrices', 'datasetRevision');
 removeProperty('priceRevisions', 'datasetRevision');
 removeProperty('importJobs', 'generation');
+removeProperty('importJobs', 'execution');
 (legacy.importJobs!.$and as Json[])[1]!.$expr = job;
 const oldPublication = structuredClone(publication);
 // Recover the exact original expression while preserving other native constraints.

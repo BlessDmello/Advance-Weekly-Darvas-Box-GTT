@@ -4,10 +4,25 @@ import { createLogger } from './config/logger.js';
 import { createAuthRuntime } from './modules/auth/runtime.js';
 import { createInvitationSender } from './modules/invitations/email.js';
 import { readMarketReferencePolicy } from './modules/imports/service.js';
+import { createImportRunner, runnerConfig } from './modules/imports/runner.js';
 
 const environment = parseEnvironment(process.env);
 const logger = createLogger(environment.LOG_LEVEL);
 const auth = createAuthRuntime(process.env);
+let executionConfig;
+try {
+  executionConfig = runnerConfig(process.env);
+} catch {
+  logger.error('Invalid import runner configuration; execution disabled.');
+  executionConfig = runnerConfig({});
+}
+const runner = createImportRunner(
+  {
+    repository: () => auth.runnerRepository(),
+    policy: () => readMarketReferencePolicy(process.env),
+  },
+  executionConfig,
+);
 const server = createApp(
   environment,
   auth,
@@ -18,9 +33,11 @@ const server = createApp(
   {
     repository: () => auth.marketRepository(),
     policy: () => readMarketReferencePolicy(process.env),
+    runner,
   },
 ).listen(environment.PORT, environment.HOST, () => {
   logger.info({ port: environment.PORT, host: environment.HOST }, 'API listening');
+  void runner.start();
 });
 
 server.on('error', () => {
@@ -36,6 +53,7 @@ function shutdown(signal: string) {
   server.close(async (error) => {
     if (error) logger.error('API shutdown failed');
     try {
+      await runner.stop();
       await auth.close();
     } catch {
       logger.error('Database shutdown failed');
@@ -43,7 +61,7 @@ function shutdown(signal: string) {
     }
     process.exit(error ? 1 : 0);
   });
-  setTimeout(() => process.exit(1), 10_000).unref();
+  setTimeout(() => process.exit(1), 30_000).unref();
 }
 
 process.on('SIGINT', () => shutdown('SIGINT'));

@@ -1,3 +1,4 @@
+import type { ImportRunner } from './runner.js';
 import { createHash } from 'node:crypto';
 import {
   IMPORT_LIMITS,
@@ -22,6 +23,7 @@ import { ParseFailure } from './parsing/limits.js';
 import { createTokenMaterial, hashToken } from '../auth/tokens.js';
 
 export interface MarketDependencies {
+  runner?: ImportRunner;
   repository(): Promise<MarketRepository>;
   policy(): MarketReferencePolicy;
   parse?: typeof parseMarketFile;
@@ -312,7 +314,7 @@ export async function confirmImport(
   input: ImportCommitInput,
   key: string,
 ) {
-  return importOperation(async () =>
+  const result = await importOperation(async () =>
     (await dependencies.repository()).commit(
       actor,
       hashToken(input.previewToken),
@@ -325,4 +327,6 @@ export async function confirmImport(
       dependencies.policy(),
     ),
   );
+  dependencies.runner?.kick(result.jobId);
+  return { ...result, executionAvailable: dependencies.runner?.enabled ?? false };
 }

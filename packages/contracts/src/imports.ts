@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { jobGenerationSchema } from './market-generations.js';
+import { importExecutionSchema } from './import-execution.js';
 import {
   dataQualitySchema,
   marketHashSchema,
@@ -189,6 +190,7 @@ export const importJobPhaseSchema = z.enum([
 export const importJobRecordSchema = z
   .object({
     generation: jobGenerationSchema.nullable().default(null),
+    execution: importExecutionSchema.nullable().optional(),
     importBatchId: marketObjectIdSchema,
     stockId: marketObjectIdSchema,
     familyId: marketObjectIdSchema,

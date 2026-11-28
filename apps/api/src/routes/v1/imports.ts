@@ -13,6 +13,8 @@ import {
   stockListResponseSchema,
   importJobResponseSchema,
   importBatchesResponseSchema,
+  importRetryInputSchema,
+  importRetryResponseSchema,
 } from '@darvas/contracts';
 import type { ApiEnvironment } from '../../config/env.js';
 import type { AuthRuntime } from '../../modules/auth/types.js';
@@ -122,8 +124,28 @@ export function marketRouters(
     const jobId = marketObjectIdSchema.parse(request.params.jobId);
     response.json(
       importJobResponseSchema.parse({
-        data: await importOperation(async () =>
-          (await dependencies.repository()).job(authenticatedUser(response), jobId),
+        data: {
+          ...(await importOperation(async () =>
+            (await dependencies.repository()).job(authenticatedUser(response), jobId),
+          )),
+          executionAvailable: dependencies.runner?.enabled ?? false,
+        },
+      }),
+    );
+  });
+  imports.post('/jobs/:jobId/retry', ...admin, ...mutation, limit, async (request, response) => {
+    const jobId = marketObjectIdSchema.parse(request.params.jobId);
+    const key = z.uuid().parse(request.get('Idempotency-Key'));
+    const input = importRetryInputSchema.parse(request.body);
+    if (!dependencies.runner)
+      throw new ImportError(503, 'RUNNER_DISABLED', 'Import execution is not enabled.');
+    response.status(202).json(
+      importRetryResponseSchema.parse({
+        data: await dependencies.runner.retry(
+          authenticatedUser(response),
+          jobId,
+          key,
+          input.reason,
         ),
       }),
     );
@@ -132,9 +154,18 @@ export function marketRouters(
     const query = marketPageQuerySchema.parse(request.query);
     response.json(
       importBatchesResponseSchema.parse(
-        await importOperation(async () =>
-          (await dependencies.repository()).batches(authenticatedUser(response), query),
-        ),
+        await importOperation(async () => {
+          const result = await (
+            await dependencies.repository()
+          ).batches(authenticatedUser(response), query);
+          return {
+            ...result,
+            data: result.data.map((row) => ({
+              ...row,
+              executionAvailable: dependencies.runner?.enabled ?? false,
+            })),
+          };
+        }),
       ),
     );
   });

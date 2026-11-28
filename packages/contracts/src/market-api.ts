@@ -1,4 +1,34 @@
+import { importRecoverySchema } from './import-execution.js';
+import { generationAssessmentSchema } from './market-generations.js';
 import { z } from 'zod';
+// Explicit public fields: refined Zod objects cannot be narrowed with omit().
+const assessment = generationAssessmentSchema.shape;
+export const importQualitySchema = z
+  .object({
+    range: assessment.range,
+    rowCount: assessment.rowCount,
+    valid: assessment.valid,
+    complete: assessment.complete,
+    freshness: assessment.freshness,
+    expectedSession: assessment.expectedSession,
+    latestSession: assessment.latestSession,
+    calendarVersion: assessment.calendarVersion,
+    warnings: assessment.warnings,
+    assessedAt: assessment.assessedAt,
+    screeningEligible: assessment.screeningEligible,
+  })
+  .strict()
+  .refine(
+    (value) =>
+      value.range.from <= value.range.to &&
+      value.latestSession <= value.range.to &&
+      (value.freshness === 'UNKNOWN'
+        ? value.expectedSession === null
+        : value.expectedSession !== null &&
+          (value.freshness === 'FRESH'
+            ? value.latestSession === value.expectedSession
+            : value.latestSession < value.expectedSession)),
+  );
 import {
   importColumnMappingSchema,
   importParseOptionsSchema,
@@ -105,7 +135,7 @@ export const stockLookupQuerySchema = marketPageQuerySchema.extend({
 const queuedScope = {
   processingScope: z.literal('PRICE_IMPORT'),
   derivedStatus: z.literal('DEFERRED'),
-  executionAvailable: z.literal(false),
+  executionAvailable: z.boolean(),
 };
 const pagination = z.object({ nextCursor: marketObjectIdSchema.nullable() }).strict();
 export const importPreviewResponseSchema = z
@@ -153,7 +183,7 @@ export const importConfirmationResponseSchema = z
         batchId: marketObjectIdSchema,
         jobId: marketObjectIdSchema,
         status: publicImportJobStatusSchema,
-        executionAvailable: z.literal(false),
+        executionAvailable: z.boolean(),
       })
       .strict(),
   })
@@ -197,6 +227,8 @@ export const importJobResponseSchema = z
         startedAt: marketTimestampSchema.nullable(),
         finishedAt: marketTimestampSchema.nullable(),
         ...queuedScope,
+        quality: importQualitySchema.nullable().optional(),
+        recovery: importRecoverySchema.optional(),
       })
       .strict(),
   })
@@ -217,6 +249,8 @@ export const importBatchesResponseSchema = z
             confirmedAt: marketTimestampSchema,
             status: publicImportJobStatusSchema,
             ...queuedScope,
+            quality: importQualitySchema.nullable().optional(),
+            recovery: importRecoverySchema.optional(),
           })
           .strict(),
       )

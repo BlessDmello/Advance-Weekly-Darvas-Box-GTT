@@ -44,7 +44,7 @@ describe('import API boundaries', () => {
     expect(marketPageQuerySchema.safeParse({ limit: 101 }).success).toBe(false);
     expect(marketPageQuerySchema.safeParse({ cursor: { $ne: null } }).success).toBe(false);
   });
-  it('confirmation responses cannot accidentally expose tokens or claim an executor exists', () => {
+  it('confirmation responses exclude tokens and carry the configured execution capability', () => {
     const response = {
       data: {
         batchId: 'a'.repeat(24),
@@ -61,7 +61,7 @@ describe('import API boundaries', () => {
     ).toBe(false);
     expect(
       importConfirmationResponseSchema.safeParse({
-        data: { ...response.data, executionAvailable: true },
+        data: { ...response.data, executionAvailable: 'true' },
       }).success,
     ).toBe(false);
   });

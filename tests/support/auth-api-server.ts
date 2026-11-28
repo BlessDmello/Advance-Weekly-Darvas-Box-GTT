@@ -3,6 +3,8 @@ import { parseEnvironment } from '../../apps/api/src/config/env.js';
 import { startAuthFixture } from './mongo.js';
 import { createAuthorizationTestApp } from '../../apps/api/tests/authorization-fixture.js';
 import { importTestDependencies } from '../../apps/api/tests/import-fixture.js';
+import { createImportRunnerRepository } from '@darvas/database';
+import * as sourceRunner from '../../apps/api/src/modules/imports/runner.js';
 import {
   createInvitationTestApp,
   invitationTestDependencies,
@@ -12,6 +14,18 @@ import {
 // Deliberately no --env-file or application MongoDB environment loading.
 const fixture = await startAuthFixture();
 const market = await importTestDependencies(fixture);
+const runnerModule: typeof sourceRunner =
+  process.env.E2E_PRODUCTION === '1'
+    ? await import(new URL('../../apps/api/dist/modules/imports/runner.js', import.meta.url).href)
+    : sourceRunner;
+const runner = runnerModule.createImportRunner(
+  {
+    repository: async () => createImportRunnerRepository(fixture.connection),
+    policy: market.policy,
+  },
+  { ...runnerModule.runnerConfig({}), enabled: true },
+);
+market.runner = runner;
 const port = Number(process.env.E2E_API_PORT ?? '4000');
 const webPort = Number(process.env.E2E_WEB_PORT ?? '3000');
 const createApp: typeof sourceApp =
@@ -43,6 +57,7 @@ async function stop() {
   stopping = true;
   server.close(async () => {
     try {
+      await runner.stop();
       await fixture.close();
       process.exit(0);
     } catch {

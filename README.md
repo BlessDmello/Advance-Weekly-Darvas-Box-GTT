@@ -233,24 +233,24 @@ Examples remain credential-free; no real approvals or reference seeds are commit
 
 Missing market storage returns a sanitized 503 without affecting Login/health.
 `pnpm market-data:prepare` remains a dry-run by default. Explicit operator `--apply`
-can install the recognized additive Phase 8B preview-context validator upgrade;
+can install the recognized additive preview-context and job-execution validator upgrades;
 unknown validator/index drift requires manual review. Automated tests never invoke
 this command against Atlas.
 
-**Queued imports cannot execute yet.** Confirmation creates an immutable batch and
+Confirmation creates an immutable batch and
 durable QUEUED job and atomically removes attached staging TTL deadlines. It changes
 no daily prices, price revisions, dataset publication or indicators. Queued payloads
-remain retained and prevent another active import for that stock. There is no runner,
-retry/cancel API or Admin import UI in this phase; these need later approved work.
+remain retained and prevent another active import for that stock. Phase 8D-2B now
+adds opt-in execution, Admin retry and operator resume; cancel and Admin import UI
+remain deferred. Confirmation itself never executes price writes synchronously.
 
 ### Versioned historical storage (Phase 8D-2A)
 
 Prices are stored by stock, dataset revision and session. Readers select one immutable
 published generation in a database snapshot; incomplete candidates never replace it.
 The storage package includes a bounded complete-history merge planner and fenced
-reservation, assessment, atomic publication and abandonment primitives. No runner,
-automatic claim, retry/resume API, chunk executor or background processing calls them.
-**Confirmed imports still remain queued.** Price publication is separate from screening;
+reservation, assessment, atomic publication and abandonment primitives. The Phase
+8D-2B runner reuses these foundations; it is disabled by default. Price publication is separate from screening;
 valid stale/raw/short history carries warnings and never implies indicator readiness.
 See [ADR 0004](docs/adr/0004-versioned-market-storage.md) for consistency and capacity bounds.
 
@@ -470,8 +470,28 @@ background outbox yet. Reopen the original email after reloading the acceptance
 page because the token is deliberately kept only in memory. See
 [the approved Stage 5 amendments](docs/adr/0001-family-invitations.md).
 
-Deferred: business-resource APIs and their ownership integration, non-identity collections/indexes,
-CSV/XLSX import, screening, DMA/CAR/Darvas calculations, portfolio accounting,
+Market imports have bounded parsing, secure preview/confirmation APIs and a
+transactional generation runner. See [ADR 0005](docs/adr/0005-transactional-import-runner.md).
+The runner is disabled by default. Set `IMPORT_RUNNER_ENABLED=true` only after
+reviewing references and preparing compatible storage. Existing queued jobs do not
+run at startup unless `IMPORT_RUNNER_RESUME_ON_STARTUP=true` is also set. Restart
+the backend after environment changes. No UI or real reference data is supplied.
+
+`pnpm imports:resume --job <jobId>` inspects one development job without writes.
+Adding `--apply` authorizes one bounded slice; unfinished work pauses for explicit
+continuation. Both commands use the backend environment and close their connection.
+Preparation and migration remain separate, dry-run-first operator actions; never
+invoke them or resume commands against Atlas as part of automated tests.
+
+Defaults are 100 output rows per transaction, a 60-second renewable lease, a
+20-second cooperative slice and five automatic recoveries. Configure these using
+the `IMPORT_RUNNER_*` placeholders in `apps/api/.env.example`. Transaction/driver
+calls may overrun a cooperative slice; interrupted work relies on durable
+checkpoints and lease expiry. Completed prices remain ineligible for screening
+with derived processing deferred. Private trading data is not modified.
+
+Deferred: business-resource APIs and their ownership integration, import Admin UI,
+verified stock/calendar reference seeding, screening, DMA/CAR/Darvas calculations, portfolio accounting,
 notifications, scheduled jobs, live feeds, cloud deployment, and broker automation.
 
 Recommended next milestone: agree on the next business-resource scope and tenancy,

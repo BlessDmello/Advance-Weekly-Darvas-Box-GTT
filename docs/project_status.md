@@ -1,7 +1,7 @@
 # Advanced Darvas Box — Project Status
 
 - **Last updated:** 28 November 2026 (Asia/Kolkata)
-- **Current milestone:** Phase 8D-1/8D-2A import APIs, versioned storage, published readers, explicit migration and publication foundations implemented, locally verified and delivered to origin/dev. Queued imports still cannot execute; runner implementation requires separate approval
+- **Current milestone:** Phase 8D-2B bounded transactional import runner implemented and locally verified; authorized delivery to origin/dev is in progress. Execution and startup recovery remain separately opt-in. Phase 8E is discovery-only and is not implemented
 - **Overall state:** Frontend foundation complete; business features and deployment pending
 
 This is the living implementation-status record. Requirements remain in the four
@@ -9,34 +9,152 @@ approved specifications; working conventions remain in [AGENTS.md](../AGENTS.md)
 Update this file with each project change. Describe completed work, pending work,
 and verification accurately rather than treating planned features as implemented.
 
+## Phase 8D-2B delivery review — 28 November 2026
+
+- User authorized committing and pushing the existing verified Phase 8D-2B work.
+  Reviewed all 35 pending implementation/documentation paths on dev. The fetched
+  origin/dev matched the local baseline before delivery; main is not a delivery target.
+- Delivery review passed whitespace, excluded-path and credential-pattern checks
+  (zero flagged files). Actual environment files remain ignored, and the four
+  approved specifications and frontend source are unchanged.
+- Reviewed the existing 28 November verification evidence: 537 passing Vitest tests
+  across 56 files, 70 compiled Playwright tests, TypeScript, zero-warning ESLint,
+  production build and formatting. Application code has not changed since that
+  verification; application checks are not rerun for this Git/documentation task.
+- Commit/push outcome is pending. No Atlas operation, migration, real market data,
+  email or deployment is part of this delivery. Phase 8E has only a discovery report;
+  its UI and the stock-universe decision still require implementation approval.
+
+## Phase 8D-2B transactional runner — 28 November 2026
+
+- Added bounded claims/leases/fencing, sequential atomic price/audit chunks and
+  durable checkpoints using the existing generation planner and published readers.
+  Publication revalidates complete candidate content, provenance, calendar and
+  quality. No-op imports avoid unnecessary generations. Private trading collections
+  remain untouched; price completion retains DEFERRED and screeningEligible=false.
+- Added opt-in in-process coordination, bounded recovery, scoped UUID-idempotent
+  Admin retry, dry-run-first development operator resume and completed-payload
+  retirement. Default execution/startup recovery are disabled. Healthy slices
+  release ownership without consuming failure-recovery budget. Runtime readiness
+  stays read-only; execution metadata needs explicit operator storage preparation.
+- Added ADR 0005 and updated operator/agent guidance. All tests use disposable
+  loopback replica sets and synthetic data; email remains mocked. No dependency
+  additions, Atlas access, live migration, real data, mail, commit, push or deployment.
+- Final verification on 28 November 2026: `pnpm typecheck`, zero-warning
+  `pnpm lint`, `pnpm test --maxWorkers=4` (**537/537 tests across 56 files**) and
+  `pnpm build` passed. Compiled `pnpm test:e2e --workers=2` passed **70/70 tests**
+  on isolated ports 3001/4001, including Admin execution through the Next proxy,
+  Member/cross-family retry denial, authentication/invitations and
+  360/390/768/1440px light/dark responsive regressions. No final tests were skipped.
+- Added 24 tests across four files. The five-year fixture imports 1,305 synthetic
+  weekday rows followed by five incremental rows, with at most 100 output rows per
+  transaction. Tests also cover atomic price/audit rollback, no-op/correction,
+  exact decimals, partial ranges, crash checkpoints, takeover fencing, duplicate
+  retries, simulated unknown commit acknowledgements, corrupt/reference-invalid
+  candidates, publication isolation, staging retirement, exhausted-claim cleanup
+  and preservation of portfolios/trades/positions/triggerStates sentinels.
+- Public quality DTOs explicitly omit content/reference hashes. Runtime execution
+  remains disabled by default; old job validators require explicit operator
+  preparation. Cooperative budgets may overrun on a slow driver call. Verified
+  real source/master/calendar data, production topology, pruning and import UI
+  remain pending. Phase 8E UI work can be scoped separately; no production or
+  verified NSE/provider compatibility is claimed.
+- Draft verification found missing job recovery DTO output, test CSRF setup issues,
+  a redundant TypeScript narrowing branch and a legacy fixture carrying a new
+  optional field. One intermediate run used a prior compiled retry DTO; a clean
+  rebuild corrected the artifact mismatch. The tightened public schema initially
+  used unsupported omit() on a refined Zod object; the production build caught it
+  and it was replaced with an explicit validated field list. The final full suite
+  and production build passed after those corrections.
+- One production build encountered Windows/OneDrive EPERM on generated .next
+  output; only the verified workspace build cache was removed and the build rerun
+  successfully. The first compiled browser startup exceeded the disposable MongoDB
+  fixture's existing ten-second startup timeout (zero browser tests ran); one fresh
+  retry passed all 70 tests without increasing budgets or changing the harness.
+  Previous dated milestone evidence below is retained as history.
+- Repository formatting, explicit ADR formatting, whitespace/diff and changed-file
+  credential-pattern checks passed (zero flagged files). The four approved
+  specifications and all frontend source remain unchanged; generated Next
+  references were restored. Task-owned servers/disposable databases stopped,
+  no listeners remained on 3000/3001/4000/4001, and the pre-existing MongoDB process
+  was preserved. All 35 changed paths remain uncommitted on dev; no remote CI
+  result is claimed.
+
+### Phase 8D-2B file manifest
+
+Created (11):
+
+```text
+apps/api/src/cli/imports-resume.test.ts
+apps/api/src/cli/imports-resume.ts
+apps/api/src/modules/imports/runner.test.ts
+apps/api/src/modules/imports/runner.ts
+docs/adr/0005-transactional-import-runner.md
+packages/contracts/src/import-execution.ts
+packages/database/src/generation-context.ts
+packages/database/src/import-runner-repository.ts
+packages/database/src/market-transaction.test.ts
+packages/database/src/market-transaction.ts
+tests/integration/import-runner.test.ts
+```
+
+Modified (24):
+
+```text
+AGENTS.md
+apps/api/.env.example
+apps/api/package.json
+apps/api/src/modules/auth/runtime.ts
+apps/api/src/modules/imports/README.md
+apps/api/src/modules/imports/service.ts
+apps/api/src/routes/v1/imports.ts
+apps/api/src/server.ts
+docs/project_status.md
+package.json
+packages/contracts/src/imports.ts
+packages/contracts/src/index.ts
+packages/contracts/src/market-api.test.ts
+packages/contracts/src/market-api.ts
+packages/database/src/index.ts
+packages/database/src/market-generations.ts
+packages/database/src/market-repository.ts
+packages/database/src/market-storage.ts
+packages/database/src/market-types.ts
+packages/database/src/market-validators.ts
+README.md
+tests/e2e/imports.spec.ts
+tests/integration/market-generation-migration.test.ts
+tests/support/auth-api-server.ts
+```
+
 ## Completed work
 
-| Area                   | Current implementation                                                                                                                                       |
-| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Monorepo               | pnpm workspaces with `apps/web`, `apps/api`, and four shared packages                                                                                        |
-| Frontend foundation    | Next.js App Router, strict TypeScript, Tailwind, shadcn/ui Button/Card primitives, emerald theme tokens                                                      |
-| Public landing page    | Route `/`, responsive header and mobile menu, approved hero copy, illustrative preview, three feature cards, four-step workflow, educational footer          |
-| Login UI               | Route `/login`, preserved design, real login with local validation, password toggle, remembered sessions, disabled recovery and static preview               |
-| Appearance             | Light, dark, and system themes with persistence; locally hosted Geist/Inter fonts and licenses                                                               |
-| Backend foundation     | Express, Zod environment validation, structured redacted logging, security middleware, request IDs, centralized errors                                       |
-| Health endpoint        | `GET /api/v1/health`; works without MongoDB                                                                                                                  |
-| API routing            | Same-origin Next.js rewrite from `/api/v1/*` to the local Express API                                                                                        |
-| Contracts              | Shared Zod health/error and identity contracts, normalized email, roles/statuses and safe user DTO allowlist                                                 |
-| Strategy-core          | Framework-independent boundaries for DMA, CAR, Darvas, suitability, and capital allocation; no trading calculations                                          |
-| Database package       | Identity plus seven market/import model definitions, explicit native validators/indexes, dry-run-first preparation and atomic bootstrap; no automatic DDL    |
-| Market-data foundation | Browser-safe Zod price/import/API contracts, exact Decimal128, provenance, scoped metadata, durable jobs and explicit publication states; no price execution |
-| Market-file parsing    | Worker-isolated CSV/XLSX reading, exact normalization, duplicate classification, bounded diagnostics and operator-approved reference assessment              |
-| Import preview APIs    | Admin CSV/XLSX upload, durable hashed-token staging, atomic idempotent confirmation to QUEUED, scoped job/history and shared stock lookup; no runner or UI   |
-| Admin bootstrap        | Interactive development-only CLI; one-time Family/Admin transaction; user reports successful development workspace/Admin creation                            |
-| Authentication         | Login/current-user/logout/CSRF, hashed sessions, centralized active/Admin/ownership guards and protected workspace; isolated Stage 4 verification passed     |
-| Family invitations     | Admin creation/listing/revoke/resend, 72-hour hash-only links, transactional Member acceptance and Resend adapter; development indexes prepared              |
-| Application shell      | Shared authenticated layout, collapsible desktop sidebar, grouped role-aware navigation, header/account controls and mobile bottom navigation/More sheet     |
-| Main Dashboard UI      | Six unavailable metrics and five data-status panels inside the existing shell; server-rendered, responsive, themed and role-aware; no business data APIs     |
-| Atlas diagnostic       | Explicit development-only `pnpm db:ping`; configuration guarded and credentials redacted; live ping succeeded against `advanced_darvas_dev`                  |
-| Test fixtures          | Structure and provenance guidance for future verified golden tests; no fabricated historical market data                                                     |
-| Quality tooling        | ESLint, Prettier, Vitest, React Testing Library, Supertest, and Playwright                                                                                   |
-| CI                     | GitHub Actions configured for Linux/Windows checks and Linux Chromium tests; no cloud deployment                                                             |
-| Project guidance       | Root `AGENTS.md` and this status tracker                                                                                                                     |
+| Area                   | Current implementation                                                                                                                                                         |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Monorepo               | pnpm workspaces with `apps/web`, `apps/api`, and four shared packages                                                                                                          |
+| Frontend foundation    | Next.js App Router, strict TypeScript, Tailwind, shadcn/ui Button/Card primitives, emerald theme tokens                                                                        |
+| Public landing page    | Route `/`, responsive header and mobile menu, approved hero copy, illustrative preview, three feature cards, four-step workflow, educational footer                            |
+| Login UI               | Route `/login`, preserved design, real login with local validation, password toggle, remembered sessions, disabled recovery and static preview                                 |
+| Appearance             | Light, dark, and system themes with persistence; locally hosted Geist/Inter fonts and licenses                                                                                 |
+| Backend foundation     | Express, Zod environment validation, structured redacted logging, security middleware, request IDs, centralized errors                                                         |
+| Health endpoint        | `GET /api/v1/health`; works without MongoDB                                                                                                                                    |
+| API routing            | Same-origin Next.js rewrite from `/api/v1/*` to the local Express API                                                                                                          |
+| Contracts              | Shared Zod health/error and identity contracts, normalized email, roles/statuses and safe user DTO allowlist                                                                   |
+| Strategy-core          | Framework-independent boundaries for DMA, CAR, Darvas, suitability, and capital allocation; no trading calculations                                                            |
+| Database package       | Identity plus seven market/import model definitions, explicit native validators/indexes, dry-run-first preparation and atomic bootstrap; no automatic DDL                      |
+| Market-data foundation | Browser-safe Zod price/import/API contracts, exact Decimal128, provenance, scoped metadata, durable jobs and explicit publication states; opt-in transactional price execution |
+| Market-file parsing    | Worker-isolated CSV/XLSX reading, exact normalization, duplicate classification, bounded diagnostics and operator-approved reference assessment                                |
+| Import preview APIs    | Admin CSV/XLSX upload, durable hashed-token staging, atomic idempotent confirmation to QUEUED, scoped job/history and shared stock lookup; runner opt-in, no import UI         |
+| Admin bootstrap        | Interactive development-only CLI; one-time Family/Admin transaction; user reports successful development workspace/Admin creation                                              |
+| Authentication         | Login/current-user/logout/CSRF, hashed sessions, centralized active/Admin/ownership guards and protected workspace; isolated Stage 4 verification passed                       |
+| Family invitations     | Admin creation/listing/revoke/resend, 72-hour hash-only links, transactional Member acceptance and Resend adapter; development indexes prepared                                |
+| Application shell      | Shared authenticated layout, collapsible desktop sidebar, grouped role-aware navigation, header/account controls and mobile bottom navigation/More sheet                       |
+| Main Dashboard UI      | Six unavailable metrics and five data-status panels inside the existing shell; server-rendered, responsive, themed and role-aware; no business data APIs                       |
+| Atlas diagnostic       | Explicit development-only `pnpm db:ping`; configuration guarded and credentials redacted; live ping succeeded against `advanced_darvas_dev`                                    |
+| Test fixtures          | Structure and provenance guidance for future verified golden tests; no fabricated historical market data                                                                       |
+| Quality tooling        | ESLint, Prettier, Vitest, React Testing Library, Supertest, and Playwright                                                                                                     |
+| CI                     | GitHub Actions configured for Linux/Windows checks and Linux Chromium tests; no cloud deployment                                                                               |
+| Project guidance       | Root `AGENTS.md` and this status tracker                                                                                                                                       |
 
 ## Landing-page decisions and boundaries
 
@@ -955,17 +1073,17 @@ secrets. Local ignored tools are optional; fresh clones should follow the README
 
 ## Pending implementation
 
-| Area                        | State                                                                                                                                                                                                                                      |
-| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Invite-only authentication  | Login/session/logout/CSRF, authorization and invitations implemented; recovery and actual business APIs remain pending                                                                                                                     |
-| Persistence                 | Identity/market models and staged preview/batch/job persistence implemented; real reference provisioning and business-resource persistence remain pending                                                                                  |
-| Market-data imports         | Preview/confirmation, durable staging and job/history/stock reads implemented; versioned storage/readers/publication foundations implemented; runner-based writes, recovery, payload retirement, verified references and UI remain pending |
-| Screening and strategies    | No DMA/CAR/Darvas/suitability algorithms, eligibility calculations, or golden parity tests                                                                                                                                                 |
-| Private application screens | Authenticated shell and unavailable-state Dashboard UI complete; live Dashboard data, screener, watchlists, stock detail, portfolio and trades pending                                                                                     |
-| Portfolio accounting        | No confirmed trade recording, positions, targets, allocation ledger, or corrections                                                                                                                                                        |
-| Notifications               | Invitation-only synchronous Resend adapter implemented; trading notifications, durable outbox and scheduled digest remain pending                                                                                                          |
-| Operations                  | No Vercel/Render deployment, production configuration, backup/restore verification, or operational monitoring                                                                                                                              |
-| Later research              | Backtests and strategy comparisons remain deferred                                                                                                                                                                                         |
+| Area                        | State                                                                                                                                                                                                                                                                   |
+| --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Invite-only authentication  | Login/session/logout/CSRF, authorization and invitations implemented; recovery and actual business APIs remain pending                                                                                                                                                  |
+| Persistence                 | Identity/market models and staged preview/batch/job persistence implemented; real reference provisioning and business-resource persistence remain pending                                                                                                               |
+| Market-data imports         | Preview/confirmation, durable staging and job/history/stock reads implemented; versioned storage/readers/publication foundations implemented; bounded runner, recovery and payload retirement implemented; verified reference provisioning and import UI remain pending |
+| Screening and strategies    | No DMA/CAR/Darvas/suitability algorithms, eligibility calculations, or golden parity tests                                                                                                                                                                              |
+| Private application screens | Authenticated shell and unavailable-state Dashboard UI complete; live Dashboard data, screener, watchlists, stock detail, portfolio and trades pending                                                                                                                  |
+| Portfolio accounting        | No confirmed trade recording, positions, targets, allocation ledger, or corrections                                                                                                                                                                                     |
+| Notifications               | Invitation-only synchronous Resend adapter implemented; trading notifications, durable outbox and scheduled digest remain pending                                                                                                                                       |
+| Operations                  | No Vercel/Render deployment, production configuration, backup/restore verification, or operational monitoring                                                                                                                                                           |
+| Later research              | Backtests and strategy comparisons remain deferred                                                                                                                                                                                                                      |
 
 Live market-data feeds and broker order execution are not part of the current
 approved milestone. Do not introduce them implicitly.
@@ -995,8 +1113,7 @@ approved milestone. Do not introduce them implicitly.
 
 ## Recommended next milestone
 
-Review the separately authorized runner milestone for transactional price/revision execution, leases/checkpoints, recovery,
-execution coordination and active-job cleanup. Phase 8D-2A provides publication foundations only. Obtain representative
+Review Phase 8E import UI scope after Phase 8D-2B verification. Obtain representative
 source files and independently reviewed stock/calendar manifests before actual imports. Dashboard
 source APIs and production proxy/TLS verification remain separate future work. The development sender is configured;
 one approved generic provider test was accepted. Additional sends require approval. Production invitation email
@@ -1042,3 +1159,4 @@ authorize starting another milestone or deploying the application.
 Keep this history concise. Replace stale current-state statements when work ships;
 retain only useful milestone evidence and unresolved decisions. Never record secrets
 or claim approval, test success, commits, pushes, or deployments without evidence.
+| 28 November 2026 | Phase 8D-2B transactional runner, retry/resume and safe staging retirement implemented; 537 Vitest tests across 56 files and 70 compiled Playwright tests passed, with TypeScript/lint/build. No Atlas, real data/email, commit, push or deployment. |

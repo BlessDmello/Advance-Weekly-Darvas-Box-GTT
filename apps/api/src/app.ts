@@ -14,6 +14,8 @@ import type { InvitationDependencies } from './modules/invitations/types.js';
 import { invitationsRouter } from './routes/v1/invitations.js';
 import { createInvitationSender } from './modules/invitations/email.js';
 import { createCsrf } from './middleware/csrf.js';
+import { marketRouters } from './routes/v1/imports.js';
+import type { MarketDependencies } from './modules/imports/service.js';
 
 export function createApp(
   environment: ApiEnvironment,
@@ -28,6 +30,12 @@ export function createApp(
       throw new Error('Invitations unavailable.');
     },
     sender: createInvitationSender(environment),
+  },
+  market: MarketDependencies = {
+    repository: async () => {
+      throw new Error('Market storage unavailable.');
+    },
+    policy: () => ({ stocks: [], calendars: [], priceSources: [] }),
   },
 ) {
   const app = express();
@@ -72,6 +80,9 @@ export function createApp(
   const security = { secret, csrf: createCsrf(environment, secret) };
   app.use('/api/v1/auth', authRouter(environment, auth, security));
   app.use('/api/v1/invitations', invitationsRouter(environment, auth, invitations, security));
+  const marketRoutes = marketRouters(environment, auth, market, security);
+  app.use('/api/v1/imports', marketRoutes.imports);
+  app.use('/api/v1/stocks', marketRoutes.stocks);
   app.use(notFoundHandler);
   app.use(errorHandler);
   return app;

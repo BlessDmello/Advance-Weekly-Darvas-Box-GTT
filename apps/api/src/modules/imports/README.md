@@ -1,8 +1,15 @@
-# Market-data parsing — Phase 8C
+# Market-data imports — Phases 8B through 8D-1
+
+Phase 8D-1 adds `service.ts`, `upload.ts` and the routes in `routes/v1/imports.ts`.
+They reuse the parser, shared security context, owned database connection and explicit
+market-storage readiness. See [ADR 0003](../../../../../docs/adr/0003-import-preview-and-confirmation.md)
+for request/response fields, reference approvals, staging and atomic confirmation.
+All import writes are Admin-scoped; stock lookup follows the API Design's active-member
+access. There is no import UI. **Queued jobs cannot execute in this phase.**
 
 `parsing/parser.ts` exports `parseMarketFile(file, options, calendar)`, a backend-only,
-bounded worker facade. There is no upload endpoint, preview persistence, job runner,
-database connection or filesystem output. Do not import this module into web code.
+bounded worker facade. The parser itself has no database connection, job runner or
+filesystem output. Do not import this module into web code.
 The synchronous/pure stages in `parser-core.ts`, `normalize.ts` and `calendar.ts` are
 internal building blocks; future request handlers must use the worker facade.
 
@@ -129,5 +136,7 @@ provenance and source licensing still require reviewed source files/reference da
 Alternative CSV encodings/delimiters, localized dates, scientific-number lexemes,
 strict OOXML, additional sheets/parts and separate raw/adjusted column sets are
 unsupported. They require explicit compatibility work, not automatic guessing.
-Preview APIs/staging, DB comparison/corrections, transactions, jobs, seeding, UI and
-strategy calculations remain outside this phase. Preserve ADR 0002 and the four specs.
+The parser does not write staged data or prices. Phase 8D-1 services compare existing
+rows exactly, stage bounded previews and queue jobs transactionally. Price/revision
+writes, execution/recovery, seeding, UI and strategy calculations remain deferred.
+Preserve ADRs 0002/0003 and the four approved specifications.

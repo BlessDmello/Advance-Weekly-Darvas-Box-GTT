@@ -3,6 +3,7 @@ import type { ErrorRequestHandler, RequestHandler, Response } from 'express';
 import { ZodError } from 'zod';
 import { AuthError } from '../modules/auth/service.js';
 import { InvitationError } from '../modules/invitations/types.js';
+import { ImportError } from '../modules/imports/service.js';
 
 export function sendError(response: Response, status: number, code: ApiErrorCode, message: string) {
   const requestId = String(response.getHeader('x-request-id'));
@@ -10,7 +11,7 @@ export function sendError(response: Response, status: number, code: ApiErrorCode
   response
     .status(status)
     .json(
-      /^\/api\/v1\/(auth|invitations)(\/|\?|$)/.test(response.req.originalUrl)
+      /^\/api\/v1\/(auth|invitations|imports|stocks)(\/|\?|$)/.test(response.req.originalUrl)
         ? { error: body.error }
         : body,
     );
@@ -26,7 +27,11 @@ export const errorHandler: ErrorRequestHandler = (error: unknown, request, respo
     return;
   }
   // Authentication/authorization guards are reusable outside the auth router.
-  if (error instanceof AuthError || error instanceof InvitationError) {
+  if (
+    error instanceof AuthError ||
+    error instanceof InvitationError ||
+    error instanceof ImportError
+  ) {
     response.status(error.status).json({
       error: {
         code: error.code,
@@ -36,7 +41,7 @@ export const errorHandler: ErrorRequestHandler = (error: unknown, request, respo
     });
     return;
   }
-  if (/^\/api\/v1\/(auth|invitations)(\/|\?|$)/.test(request.originalUrl)) {
+  if (/^\/api\/v1\/(auth|invitations|imports|stocks)(\/|\?|$)/.test(request.originalUrl)) {
     const oversized = error instanceof Error && 'status' in error && error.status === 413;
     const status = oversized
       ? 413
@@ -50,13 +55,17 @@ export const errorHandler: ErrorRequestHandler = (error: unknown, request, respo
         code:
           status === 422 || status === 400 || status === 413
             ? 'VALIDATION_ERROR'
-            : request.originalUrl.startsWith('/api/v1/invitations')
-              ? 'INVITATION_UNAVAILABLE'
-              : 'AUTH_UNAVAILABLE',
+            : /^\/api\/v1\/(imports|stocks)(\/|\?|$)/.test(request.originalUrl)
+              ? 'MARKET_STORAGE_UNAVAILABLE'
+              : request.originalUrl.startsWith('/api/v1/invitations')
+                ? 'INVITATION_UNAVAILABLE'
+                : 'AUTH_UNAVAILABLE',
         message:
           status === 422 || status === 400 || status === 413
             ? 'Request validation failed.'
-            : 'Sign-in is temporarily unavailable.',
+            : /^\/api\/v1\/(imports|stocks)(\/|\?|$)/.test(request.originalUrl)
+              ? 'Market operations are temporarily unavailable.'
+              : 'Sign-in is temporarily unavailable.',
         requestId: String(response.getHeader('x-request-id')),
       },
     });

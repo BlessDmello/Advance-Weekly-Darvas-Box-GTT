@@ -29,7 +29,7 @@ const publication = new Schema(
     sourceRevisionKey: { type: String, default: null },
     derivedStatus: { type: String, required: true, enum: ['DEFERRED'] },
   },
-  { _id: false, strict: 'throw' },
+  { _id: false, versionKey: false, strict: 'throw' },
 );
 export const stockSchema: Schema<Stored<StockRecord>> = new Schema(
   {
@@ -42,7 +42,7 @@ export const stockSchema: Schema<Stored<StockRecord>> = new Schema(
       type: [
         new Schema(
           { from: text(10), to: { type: String, default: null }, source: text(500) },
-          { _id: false, strict: 'throw' },
+          { _id: false, versionKey: false, strict: 'throw' },
         ),
       ],
       required: true,
@@ -92,13 +92,34 @@ stockSchema.pre('validate', async function () {
     this.invalidate('publication', 'Dataset publication changes require an explicit transaction.');
     return;
   }
-  const publishing = next.data.state === 'PUBLISHED';
+  const publishing =
+    next.data.state === 'PUBLISHED' &&
+    next.data.publishedRevision > previous.data.publishedRevision;
+  const abandoning =
+    ['PUBLISHED', 'UNAVAILABLE'].includes(next.data.state) &&
+    next.data.publishedRevision === previous.data.publishedRevision &&
+    next.data.activeJobId === null;
   const job = await this.db
     .model('MarketImportJob')
     .findOne({
-      _id: publishing ? previous.data.activeJobId : next.data.activeJobId,
+      _id: publishing || abandoning ? previous.data.activeJobId : next.data.activeJobId,
       stockId: this._id,
-      status: { $in: publishing ? ['COMPLETED'] : ['QUEUED', 'RUNNING', 'RETRY', 'FAILED'] },
+      status: {
+        $in: publishing
+          ? ['COMPLETED']
+          : abandoning
+            ? ['FAILED']
+            : ['QUEUED', 'RUNNING', 'RETRY', 'FAILED'],
+      },
+      ...(publishing
+        ? {
+            'generation.basePublishedRevision': previous.data.publishedRevision,
+            'generation.candidateRevision': next.data.publishedRevision,
+            'generation.assessment.contentHash': next.data.sourceRevisionKey,
+            'generation.assessment.valid': true,
+            'generation.assessment.complete': true,
+          }
+        : {}),
     })
     .session(session)
     .lean();

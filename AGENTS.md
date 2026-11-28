@@ -107,8 +107,9 @@ notification delivery, scheduled jobs, and cloud deployment remain deferred unti
 Existing scaffold and landing-page maintenance do not require reapproving Phase 1.
 
 Phase 8B adds market-data contracts and the seven market/import model definitions;
-Phase 8C adds bounded, backend-only CSV/XLSX parsing and validation. Import APIs,
-reference seeding, persistence adapters, a runner and UI remain deferred. See
+Phase 8C adds bounded, backend-only CSV/XLSX parsing and validation. Phase 8D-1 adds
+Admin preview/confirmation, family-scoped job/batch reads and active-member stock
+lookup. Daily-price/revision processing, reference seeding, a runner and UI remain deferred. See
 `docs/adr/0002-market-data-import-foundation.md` for additive storage decisions.
 `createMarketModels` only registers models. `verifyMarketStorage` is read-only;
 `prepareMarketStorage` is explicit and dry-run by default. The development-only
@@ -122,6 +123,44 @@ matching job and transaction. Model query/bulk mutations are intentionally block
 future persistence work must supply explicitly audited transaction adapters before writes.
 Price-import completion always leaves derived processing DEFERRED. Public state
 labels and schema fields are not proof of an implemented import/calculation service.
+
+Phase 8D-1 routes use the same verified session/active/Admin middleware and CSRF
+context as authentication/invitations. Keep multipart reading after authorization,
+Origin and CSRF checks. `marketRepository()` reuses the existing owned connection
+with a separate read-only market-readiness check; Login/health never prepare market
+storage. See `docs/adr/0003-import-preview-and-confirmation.md` for additive fields.
+`MARKET_REFERENCE_APPROVALS` is bounded, server-only operator configuration. Empty,
+missing or mismatched real reference approvals must never become verified data.
+Clients cannot set actor/family/role or provenance verification. Approved source
+policy does not authenticate uploaded prices; uploaded provenance stays DECLARED.
+Keep preview capabilities hashed in storage and scoped to actor/family. Confirmation
+verifies every durable chunk, rechecks approvals/revision, and creates the batch/job
+and removes all staging TTL deadlines in one transaction. Only a technical Stock.__v
+fence changes; publication fields and dataset revisions remain untouched in 8D-1.
+Queued imports cannot execute yet and must retain their payload. No HTTP route may
+seed references or create indexes/validators. Explicit preparation recognizes only
+the known additive Phase 8B preview-context validator upgrade; arbitrary drift fails
+closed. The E2E import reference helper is disposable startup-only test code, excluded
+from production, and must never be used to populate Atlas or manual development data.
+
+Phase 8D-2A adds versioned storage/publication foundations only. See ADR 0004.
+Daily prices are unique on stockId/datasetRevision/sessionDate; correction audit
+identity also includes datasetRevision. Stock publication.revision is a monotonic
+allocator; publishedRevision is the reader pointer and may be lower after failures.
+Always use readPublishedPrices for published data: it resolves the pointer and rows
+in a single snapshot, checks complete content integrity and never falls back to
+candidates. Candidate planning preserves unaffected history. Published generations
+are immutable and never pruned automatically. Price publication remains explicitly
+ineligible for screening, including stale/raw/short-history data with warnings.
+Generation repository primitives require an already established live lease/fence
+and verified confirmed payload; they do not claim jobs or execute/write price chunks.
+Keep runner/coordinator, retry/resume, scheduler and staging retirement deferred.
+The offline market-data:migrate-generations command is dry-run-first and development
+only; --apply additionally needs --offline-confirmed and --backup-confirmed. These
+attestations do not create or verify a backup. Only this explicit migration may
+replace the recognized old price uniqueness indexes; ordinary preparation must
+refuse legacy generation storage and unrelated drift. Never invoke it against Atlas
+as part of testing. Ambiguous legacy publication or audit lineage must fail closed.
 
 Use `apps/api/src/modules/imports/parsing/parser.ts` for bounded parser execution;
 see the module `README.md` for source profiles, limits and dependency decisions.
@@ -233,20 +272,21 @@ and `pnpm-lock.yaml`. Check those files rather than assuming a global tool versi
 
 Run from the repository root:
 
-| Command                             | Purpose                                                               |
-| ----------------------------------- | --------------------------------------------------------------------- |
-| `pnpm install --frozen-lockfile`    | Install the existing dependency graph reproducibly                    |
-| `pnpm dev`                          | Build shared packages, then watch packages and run both apps          |
-| `pnpm dev:web` / `pnpm dev:api`     | Build packages and start one application                              |
-| `pnpm build:packages`               | Emit shared JavaScript and declarations                               |
-| `pnpm db:ping`                      | Explicit read-only Atlas connectivity check for `advanced_darvas_dev` |
-| `pnpm admin:bootstrap`              | Interactive one-time development Family/Admin initialization          |
-| `pnpm typecheck`                    | Check package/app types plus test and tool configuration              |
-| `pnpm lint`                         | ESLint with zero allowed warnings                                     |
-| `pnpm test`                         | Vitest, React Testing Library, and Supertest checks                   |
-| `pnpm build`                        | Production builds in dependency order                                 |
-| `pnpm test:e2e`                     | Desktop/mobile Chromium smoke tests with managed local servers        |
-| `pnpm format` / `pnpm format:check` | Format or verify implementation files                                 |
+| Command                                | Purpose                                                               |
+| -------------------------------------- | --------------------------------------------------------------------- |
+| `pnpm install --frozen-lockfile`       | Install the existing dependency graph reproducibly                    |
+| `pnpm dev`                             | Build shared packages, then watch packages and run both apps          |
+| `pnpm dev:web` / `pnpm dev:api`        | Build packages and start one application                              |
+| `pnpm build:packages`                  | Emit shared JavaScript and declarations                               |
+| `pnpm db:ping`                         | Explicit read-only Atlas connectivity check for `advanced_darvas_dev` |
+| `pnpm market-data:migrate-generations` | Explicit offline generation migration; dry-run by default             |
+| `pnpm admin:bootstrap`                 | Interactive one-time development Family/Admin initialization          |
+| `pnpm typecheck`                       | Check package/app types plus test and tool configuration              |
+| `pnpm lint`                            | ESLint with zero allowed warnings                                     |
+| `pnpm test`                            | Vitest, React Testing Library, and Supertest checks                   |
+| `pnpm build`                           | Production builds in dependency order                                 |
+| `pnpm test:e2e`                        | Desktop/mobile Chromium smoke tests with managed local servers        |
+| `pnpm format` / `pnpm format:check`    | Format or verify implementation files                                 |
 
 For intentional dependency updates, update manifests and the pnpm lockfile together,
 verify peer/engine compatibility, and review install-script policy changes. Do not

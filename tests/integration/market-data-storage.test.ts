@@ -1,4 +1,8 @@
 import { randomUUID } from 'node:crypto';
+import {
+  insertSyntheticPrice,
+  insertSyntheticRevision,
+} from '../support/market-storage-fixture.js';
 import { fileURLToPath } from 'node:url';
 import { afterAll, beforeAll, beforeEach, expect, it } from 'vitest';
 import { MongoMemoryReplSet } from 'mongodb-memory-server-core';
@@ -65,7 +69,31 @@ afterAll(async () => {
   }
 });
 const prepare = () => prepareMarketStorage(owned(), true);
+it('upgrades only the known Phase 8B metadata validators after explicit apply', async () => {
+  await prepare();
+  type Node = { properties?: Record<string, Node>; anyOf?: Node[] };
+  for (const name of ['importBatches', 'importStaging']) {
+    const info = await owned().db!.listCollections({ name }, { nameOnly: false }).next();
+    const legacy = structuredClone(info!.options!.validator) as { $and: [{ $jsonSchema: Node }] };
+    const schema = legacy.$and[0].$jsonSchema;
+    if (name === 'importBatches') delete schema.properties!.preview!.properties!.context;
+    else
+      for (const variant of schema.anyOf!)
+        if (variant.properties?.metadata?.properties)
+          delete variant.properties.metadata.properties.context;
+    await owned().db!.command({ collMod: name, validator: legacy });
+  }
+  const dryRun = await prepareMarketStorage(owned());
+  expect(dryRun.incompatible).toEqual([]);
+  expect(dryRun.validatorsToInstall.sort()).toEqual(['importBatches', 'importStaging']);
+  await expect(verifyMarketStorage(owned())).rejects.toThrow('Explicit preparation');
+  await prepare();
+  await verifyMarketStorage(owned());
+  expect(await models().ImportBatch.countDocuments()).toBe(0);
+  expect(await models().ImportStaging.countDocuments()).toBe(0);
+});
 const priceData = () => ({
+  datasetRevision: 1,
   ...syntheticRow(),
   stockId: marketIds.stock,
   revision: 1,
@@ -115,7 +143,7 @@ it('enforces unique stock identity and session dates', async () => {
 it('preserves exact Decimal128 prices and rejects duplicate stock/session imports', async () => {
   await prepare();
   const exact = '1.000000000000000000000000000000001';
-  const price = await models().DailyPrice.create({
+  const price = await insertSyntheticPrice(owned(), {
     ...priceData(),
     raw: { open: exact, high: exact, low: exact, close: exact },
     volume: null,
@@ -123,11 +151,11 @@ it('preserves exact Decimal128 prices and rejects duplicate stock/session import
   const loaded = await models().DailyPrice.findById(price._id);
   expect(loaded!.raw!.close.toString()).toBe(exact);
   expect(loaded!.volume).toBeNull();
-  await expect(models().DailyPrice.create(priceData())).rejects.toMatchObject({ code: 11000 });
+  await expect(insertSyntheticPrice(owned(), priceData())).rejects.toMatchObject({ code: 11000 });
 });
 it('native validators reject invalid OHLC and unsafe publication even through driver updates', async () => {
   await prepare();
-  const price = await models().DailyPrice.create(priceData());
+  const price = await insertSyntheticPrice(owned(), priceData());
   await expect(
     models().DailyPrice.collection.updateOne(
       { _id: price._id },
@@ -192,27 +220,29 @@ it('publication requires transactional reservation and a matching completed job,
   await job.save();
   job.set('phase', 'READY_TO_PUBLISH');
   await job.save();
-  await owned().transaction(async (session) => {
-    job.$session(session);
-    job.set({
-      status: 'COMPLETED',
-      phase: 'COMPLETED',
-      leaseOwner: null,
-      leaseUntil: null,
-      finishedAt: new Date(),
-    });
-    await job.save();
-    const current = (await models().Stock.findById(stock._id).session(session))!;
-    current.set('publication', published);
-    await current.save();
-  });
+  await expect(
+    owned().transaction(async (session) => {
+      job.$session(session);
+      job.set({
+        status: 'COMPLETED',
+        phase: 'COMPLETED',
+        leaseOwner: null,
+        leaseUntil: null,
+        finishedAt: new Date(),
+      });
+      await job.save();
+      const current = (await models().Stock.findById(stock._id).session(session))!;
+      current.set('publication', published);
+      await current.save();
+    }),
+  ).rejects.toThrow('matching job');
   expect((await models().Stock.findById(stock._id))!.publication.derivedStatus).toBe('DEFERRED');
-  expect((await models().Stock.findById(stock._id))!.publication.state).toBe('PUBLISHED');
+  expect((await models().Stock.findById(stock._id))!.publication.state).toBe('IMPORTING');
 });
 it('price revisions have unique consecutive identities and append-only model operations', async () => {
   await prepare();
-  const revision = await models().PriceRevision.create(syntheticRevision());
-  await expect(models().PriceRevision.create(syntheticRevision())).rejects.toMatchObject({
+  const revision = await insertSyntheticRevision(owned(), syntheticRevision());
+  await expect(insertSyntheticRevision(owned(), syntheticRevision())).rejects.toMatchObject({
     code: 11000,
   });
   await expect(
@@ -468,13 +498,13 @@ it('preparation refuses incompatible records/validators rather than rewriting th
 });
 it('detects compound index order drift rather than treating reversed keys as compatible', async () => {
   await prepare();
-  await models().DailyPrice.collection.dropIndex('stock_history');
+  await models().DailyPrice.collection.dropIndex('generation_history');
   await models().DailyPrice.collection.createIndex(
-    { sessionDate: -1, stockId: 1 },
-    { name: 'stock_history' },
+    { sessionDate: -1, datasetRevision: 1, stockId: 1 },
+    { name: 'generation_history' },
   );
   const report = await inspectMarketStorage(owned());
-  expect(report.incompatible).toContain('dailyPrices:stock_history');
+  expect(report.incompatible).toContain('dailyPrices:generation_history');
   await expect(prepare()).rejects.toThrow('manual compatibility');
 });
 it('refuses unknown native validators instead of overwriting operator constraints', async () => {

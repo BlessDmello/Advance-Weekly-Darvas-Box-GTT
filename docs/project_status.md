@@ -1,7 +1,7 @@
 # Advanced Darvas Box — Project Status
 
-- **Last updated:** 27 November 2026 (Asia/Kolkata)
-- **Current milestone:** Phases 8B/8C market-data foundation and bounded parsing implemented, locally verified and delivered to origin/dev; Phase 8D persistence/API workflow and production readiness remain pending
+- **Last updated:** 28 November 2026 (Asia/Kolkata)
+- **Current milestone:** Phase 8D-2A versioned storage, published readers, explicit migration and publication foundations implemented and locally verified. Phase 8D-1/8D-2A work remains uncommitted. Queued imports still cannot execute; runner implementation requires separate approval
 - **Overall state:** Frontend foundation complete; business features and deployment pending
 
 This is the living implementation-status record. Requirements remain in the four
@@ -11,31 +11,32 @@ and verification accurately rather than treating planned features as implemented
 
 ## Completed work
 
-| Area                   | Current implementation                                                                                                                                                  |
-| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Monorepo               | pnpm workspaces with `apps/web`, `apps/api`, and four shared packages                                                                                                   |
-| Frontend foundation    | Next.js App Router, strict TypeScript, Tailwind, shadcn/ui Button/Card primitives, emerald theme tokens                                                                 |
-| Public landing page    | Route `/`, responsive header and mobile menu, approved hero copy, illustrative preview, three feature cards, four-step workflow, educational footer                     |
-| Login UI               | Route `/login`, preserved design, real login with local validation, password toggle, remembered sessions, disabled recovery and static preview                          |
-| Appearance             | Light, dark, and system themes with persistence; locally hosted Geist/Inter fonts and licenses                                                                          |
-| Backend foundation     | Express, Zod environment validation, structured redacted logging, security middleware, request IDs, centralized errors                                                  |
-| Health endpoint        | `GET /api/v1/health`; works without MongoDB                                                                                                                             |
-| API routing            | Same-origin Next.js rewrite from `/api/v1/*` to the local Express API                                                                                                   |
-| Contracts              | Shared Zod health/error and identity contracts, normalized email, roles/statuses and safe user DTO allowlist                                                            |
-| Strategy-core          | Framework-independent boundaries for DMA, CAR, Darvas, suitability, and capital allocation; no trading calculations                                                     |
-| Database package       | Identity plus seven market/import model definitions, explicit native validators/indexes, dry-run-first preparation and atomic bootstrap; no automatic DDL               |
-| Market-data foundation | Browser-safe Zod price/import contracts, exact Decimal128, provenance, scoped metadata, durable job/checkpoint shapes and publication states; no import services        |
-| Market-file parsing    | Worker-isolated CSV/XLSX reading, exact normalization, duplicate classification, bounded diagnostics and trusted-calendar assessment; no upload endpoint or persistence |
-| Admin bootstrap        | Interactive development-only CLI; one-time Family/Admin transaction; user reports successful development workspace/Admin creation                                       |
-| Authentication         | Login/current-user/logout/CSRF, hashed sessions, centralized active/Admin/ownership guards and protected workspace; isolated Stage 4 verification passed                |
-| Family invitations     | Admin creation/listing/revoke/resend, 72-hour hash-only links, transactional Member acceptance and Resend adapter; development indexes prepared                         |
-| Application shell      | Shared authenticated layout, collapsible desktop sidebar, grouped role-aware navigation, header/account controls and mobile bottom navigation/More sheet                |
-| Main Dashboard UI      | Six unavailable metrics and five data-status panels inside the existing shell; server-rendered, responsive, themed and role-aware; no business data APIs                |
-| Atlas diagnostic       | Explicit development-only `pnpm db:ping`; configuration guarded and credentials redacted; live ping succeeded against `advanced_darvas_dev`                             |
-| Test fixtures          | Structure and provenance guidance for future verified golden tests; no fabricated historical market data                                                                |
-| Quality tooling        | ESLint, Prettier, Vitest, React Testing Library, Supertest, and Playwright                                                                                              |
-| CI                     | GitHub Actions configured for Linux/Windows checks and Linux Chromium tests; no cloud deployment                                                                        |
-| Project guidance       | Root `AGENTS.md` and this status tracker                                                                                                                                |
+| Area                   | Current implementation                                                                                                                                       |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Monorepo               | pnpm workspaces with `apps/web`, `apps/api`, and four shared packages                                                                                        |
+| Frontend foundation    | Next.js App Router, strict TypeScript, Tailwind, shadcn/ui Button/Card primitives, emerald theme tokens                                                      |
+| Public landing page    | Route `/`, responsive header and mobile menu, approved hero copy, illustrative preview, three feature cards, four-step workflow, educational footer          |
+| Login UI               | Route `/login`, preserved design, real login with local validation, password toggle, remembered sessions, disabled recovery and static preview               |
+| Appearance             | Light, dark, and system themes with persistence; locally hosted Geist/Inter fonts and licenses                                                               |
+| Backend foundation     | Express, Zod environment validation, structured redacted logging, security middleware, request IDs, centralized errors                                       |
+| Health endpoint        | `GET /api/v1/health`; works without MongoDB                                                                                                                  |
+| API routing            | Same-origin Next.js rewrite from `/api/v1/*` to the local Express API                                                                                        |
+| Contracts              | Shared Zod health/error and identity contracts, normalized email, roles/statuses and safe user DTO allowlist                                                 |
+| Strategy-core          | Framework-independent boundaries for DMA, CAR, Darvas, suitability, and capital allocation; no trading calculations                                          |
+| Database package       | Identity plus seven market/import model definitions, explicit native validators/indexes, dry-run-first preparation and atomic bootstrap; no automatic DDL    |
+| Market-data foundation | Browser-safe Zod price/import/API contracts, exact Decimal128, provenance, scoped metadata, durable jobs and explicit publication states; no price execution |
+| Market-file parsing    | Worker-isolated CSV/XLSX reading, exact normalization, duplicate classification, bounded diagnostics and operator-approved reference assessment              |
+| Import preview APIs    | Admin CSV/XLSX upload, durable hashed-token staging, atomic idempotent confirmation to QUEUED, scoped job/history and shared stock lookup; no runner or UI   |
+| Admin bootstrap        | Interactive development-only CLI; one-time Family/Admin transaction; user reports successful development workspace/Admin creation                            |
+| Authentication         | Login/current-user/logout/CSRF, hashed sessions, centralized active/Admin/ownership guards and protected workspace; isolated Stage 4 verification passed     |
+| Family invitations     | Admin creation/listing/revoke/resend, 72-hour hash-only links, transactional Member acceptance and Resend adapter; development indexes prepared              |
+| Application shell      | Shared authenticated layout, collapsible desktop sidebar, grouped role-aware navigation, header/account controls and mobile bottom navigation/More sheet     |
+| Main Dashboard UI      | Six unavailable metrics and five data-status panels inside the existing shell; server-rendered, responsive, themed and role-aware; no business data APIs     |
+| Atlas diagnostic       | Explicit development-only `pnpm db:ping`; configuration guarded and credentials redacted; live ping succeeded against `advanced_darvas_dev`                  |
+| Test fixtures          | Structure and provenance guidance for future verified golden tests; no fabricated historical market data                                                     |
+| Quality tooling        | ESLint, Prettier, Vitest, React Testing Library, Supertest, and Playwright                                                                                   |
+| CI                     | GitHub Actions configured for Linux/Windows checks and Linux Chromium tests; no cloud deployment                                                             |
+| Project guidance       | Root `AGENTS.md` and this status tracker                                                                                                                     |
 
 ## Landing-page decisions and boundaries
 
@@ -81,6 +82,109 @@ and verification accurately rather than treating planned features as implemented
   weekly trigger values are mock presentation content, not calculations.
 - The landing content and layout remain preserved; its two Sign In actions open
   `/login`. Stage 3 changes auth behavior only; no trading dashboard is implemented.
+
+## Phase 8D-2A generation storage foundations — 28 November 2026
+
+- Implemented approved generation storage in the same seven collections: daily
+  prices are unique by stock/revision/session, correction identities include the
+  dataset generation, and the allocator stays monotonic when candidates fail.
+  Jobs carry nullable base/candidate/build/quality metadata. Existing preview and
+  confirmation API envelopes remain unchanged; new queued jobs keep null metadata.
+- Added immutable published-generation snapshot readers and a bounded pure candidate
+  merge planner that retains unaffected sessions. Publication primitives recheck
+  confirmed payloads, current reference approvals, actual candidate content, audits,
+  counters and build state. Live Admin/family and lease owner/version/expiry are
+  enforced. Job completion and pointer publication commit together; abandonment
+  preserves the old pointer and never reuses an allocated revision number.
+- Valid stale/raw/short histories publish only with explicit warnings; all reader
+  and assessment results retain screeningEligible=false and derived processing is
+  DEFERRED. Verified calendar coverage is required; unavailable current-date coverage
+  yields Unknown freshness rather than a fabricated current-session claim.
+- Capacity bounds are 20,000 rows/32 MiB per price generation, 16 KiB per row and
+  128 MiB of retained price/audit BSON per stock. Read-only diagnostics report usage;
+  there is no automatic generation deletion, reference seeding or TTL on prices.
+- Added ADR 0004 and an offline development-only generation migration command.
+  Dry-run is the default; apply requires explicit offline and verified-backup
+  attestations. Only known storage is migrated; ambiguous datasets and unknown audit
+  lineage are refused. Recognized interrupted DDL can resume forward. The tool does
+  not create backups or prove restore readiness and was not invoked against Atlas.
+- Corrected market subdocument version-key configuration after rollback tests exposed
+  strict-schema transaction recovery errors. Root optimistic concurrency remains.
+  Legacy fixtures now use real generation hashes and explicitly owned synthetic
+  insertion rather than bypassing immutable published-data behavior in application code.
+- Final verification on 28 November 2026: TypeScript, zero-warning ESLint and
+  production build passed. The clean four-worker full Vitest run passed **513/513
+  tests across 52 files**, including 44 new tests across five files. Compiled
+  Playwright passed **70/70 tests** on isolated ports 3001/4001, including auth,
+  invitations, import confirmation/proxy, keyboard navigation and
+  360/390/768/1440px light/dark layouts. Root formatting, both additive ADR checks,
+  whitespace and credential-pattern checks passed. No tests were skipped.
+- Earlier draft checks found legacy fixture/index assumptions and market subdocument
+  rollback errors; these were corrected. An initial full run had 512 passes and one
+  large BSON-capacity test timeout. Capacity rejection now stops early, and that
+  fixture has an explicit 15-second budget. A subsequent run passed 502 tests but
+  could not load 11 identity-model tests because of a Windows EBUSY dependency-file
+  lock. The final four-worker rerun passed all tests with no application workaround.
+- No runner/coordinator, automatic claims, chunk executor/price-write orchestration,
+  retry endpoint, resume command, scheduler, indicator calculations or import UI exists.
+  Attached staging retains its no-TTL protection; lifecycle retirement is deferred.
+  No dependencies added, Atlas access, real email, commit, push or deployment.
+  Task-owned servers and disposable databases stopped; the pre-existing MongoDB
+  process was preserved. No app/test listeners remained on 3000/3001/4000/4001.
+  Generated Next references were restored; frontend source and all four approved
+  specifications remain unchanged.
+
+## Phase 8D-1 import preview and confirmation — 28 November 2026
+
+- Implemented Admin-only POST `/api/v1/imports/preview` and `/imports/commit`,
+  family-scoped Admin GET `/imports/jobs/:jobId` and `/imports/batches`, and active
+  Member/Admin GET `/api/v1/stocks`. All responses are no-store and allowlisted;
+  mutation routes reuse the existing shared Origin/CSRF/session protections.
+- Added bounded memory-only multipart transport, existing worker-parser integration,
+  exact stored-price comparison, immutable preview context, and transaction adapters.
+  Preview tokens are opaque, hash-only in storage and scoped to the Admin/family.
+  Confirmation rechecks references, policy, logical expiry, identity, revision and
+  every chunk. Actor/key and global active-stock unique indexes arbitrate races.
+  One transaction creates the batch/job and removes every attached TTL deadline;
+  a late failure rolls back attachments, job, batch and the technical Stock.__v fence.
+- Server-only `MARKET_REFERENCE_APPROVALS` defaults to no approvals. Missing, changed
+  or ambiguous reference coverage blocks confirmation. No real stock/calendar/source
+  approvals are supplied automatically. Approved source policy does not authenticate
+  an uploaded file: persisted upload provenance remains DECLARED. Unknown/mixed basis
+  and adjustment-version conflicts stay blocked; historical changes require a reason.
+- Added ADR 0003 for additive API/context/approval decisions. Explicit dry-run-first
+  market preparation recognizes only the known prior Phase 8B context-validator
+  upgrade; HTTP/Login/health never prepare storage. Fixed the existing Mongoose
+  metadata adapter to allow diagnostic row=null while preserving integer bounds.
+  The original 404 scaffold test now uses an actually missing route rather than stocks.
+- Pinned necessary multipart dependency busboy 1.6.0 and development-only
+  @types/busboy 1.5.5; lockfile changes contain only their dependency graph.
+- Verification on 28 November 2026: workspace TypeScript, zero-warning ESLint,
+  production build, root formatting, explicit ADR formatting and diff checks passed.
+  Full Vitest **469/469 tests across 47 files passed**, including 44 added cases:
+  33 import integration, five contract, four configuration, one model and one explicit
+  legacy-validator upgrade test. The first full run had one stale scaffold expectation
+  (468 passed/one failed); that assertion was corrected and the full rerun passed.
+  Targeted import/contract/storage verification also passed **68/68 tests**.
+- Compiled Playwright **70/70 tests passed** on isolated ports 3001/4001, including
+  six new proxy cases (anonymous denial, valid-CSRF Member denial/shared stock access,
+  Admin preview/confirmation/idempotent replay/scoped reads, on both projects).
+  Existing Login/Logout, invitations, authorization, navigation, keyboard and
+  360/390/768/1440px light/dark regressions passed. Task-owned servers and disposable
+  MongoDB processes stopped; the pre-existing MongoDB process was preserved. No app/test
+  listeners remained on ports 3000/3001/4000/4001. Generated Next references were restored.
+- Production audit: zero advisories. Full audit retains the pre-existing moderate,
+  development-only minimatch advisory via shadcn/ts-morph (GHSA-g3hv-75wg-m249).
+  No unrelated dependency upgrade or new advisory was introduced.
+- Tests use disposable loopback MongoDB 8.2.6, synthetic references/credentials and
+  mocked email. No app environment files, Atlas preparation/seeding, real account,
+  provider send or production data were used by fixtures. The four specifications
+  and frontend source/designs remain unchanged. No commit, push or deployment.
+- **Queued imports cannot execute yet.** No daily prices, price revisions, publication
+  fields/revisions, indicators, trades or notifications are written. Active queued
+  payloads remain retained and block another import for that stock; no runner,
+  cancellation or automatic active-job cleanup exists. Real source examples,
+  reviewed stock/calendar records and operational limits remain unverified.
 
 ## Phase 8B/8C Git delivery — 27 November 2026
 
@@ -832,17 +936,17 @@ secrets. Local ignored tools are optional; fresh clones should follow the README
 
 ## Pending implementation
 
-| Area                        | State                                                                                                                                                                        |
-| --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Invite-only authentication  | Login/session/logout/CSRF, authorization and invitations implemented; recovery and actual business APIs remain pending                                                       |
-| Persistence                 | Identity and market/import models implemented; market preparation/reference loading not performed against Atlas in Phase 8B; business-resource persistence pending           |
-| Market-data imports         | Contracts/models/index preparation and bounded CSV/XLSX parsing implemented; preview/commit APIs, persistence, runner, reference/calendar seeds and import UI remain pending |
-| Screening and strategies    | No DMA/CAR/Darvas/suitability algorithms, eligibility calculations, or golden parity tests                                                                                   |
-| Private application screens | Authenticated shell and unavailable-state Dashboard UI complete; live Dashboard data, screener, watchlists, stock detail, portfolio and trades pending                       |
-| Portfolio accounting        | No confirmed trade recording, positions, targets, allocation ledger, or corrections                                                                                          |
-| Notifications               | Invitation-only synchronous Resend adapter implemented; trading notifications, durable outbox and scheduled digest remain pending                                            |
-| Operations                  | No Vercel/Render deployment, production configuration, backup/restore verification, or operational monitoring                                                                |
-| Later research              | Backtests and strategy comparisons remain deferred                                                                                                                           |
+| Area                        | State                                                                                                                                                                                                                                      |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Invite-only authentication  | Login/session/logout/CSRF, authorization and invitations implemented; recovery and actual business APIs remain pending                                                                                                                     |
+| Persistence                 | Identity/market models and staged preview/batch/job persistence implemented; real reference provisioning and business-resource persistence remain pending                                                                                  |
+| Market-data imports         | Preview/confirmation, durable staging and job/history/stock reads implemented; versioned storage/readers/publication foundations implemented; runner-based writes, recovery, payload retirement, verified references and UI remain pending |
+| Screening and strategies    | No DMA/CAR/Darvas/suitability algorithms, eligibility calculations, or golden parity tests                                                                                                                                                 |
+| Private application screens | Authenticated shell and unavailable-state Dashboard UI complete; live Dashboard data, screener, watchlists, stock detail, portfolio and trades pending                                                                                     |
+| Portfolio accounting        | No confirmed trade recording, positions, targets, allocation ledger, or corrections                                                                                                                                                        |
+| Notifications               | Invitation-only synchronous Resend adapter implemented; trading notifications, durable outbox and scheduled digest remain pending                                                                                                          |
+| Operations                  | No Vercel/Render deployment, production configuration, backup/restore verification, or operational monitoring                                                                                                                              |
+| Later research              | Backtests and strategy comparisons remain deferred                                                                                                                                                                                         |
 
 Live market-data feeds and broker order execution are not part of the current
 approved milestone. Do not introduce them implicitly.
@@ -872,8 +976,9 @@ approved milestone. Do not introduce them implicitly.
 
 ## Recommended next milestone
 
-Agree on Phase 8D preview/persistence boundaries and obtain representative source files
-and verified stock/calendar manifests before integrating actual imports. Dashboard
+Review the separately authorized runner milestone for transactional price/revision execution, leases/checkpoints, recovery,
+execution coordination and active-job cleanup. Phase 8D-2A provides publication foundations only. Obtain representative
+source files and independently reviewed stock/calendar manifests before actual imports. Dashboard
 source APIs and production proxy/TLS verification remain separate future work. The development sender is configured;
 one approved generic provider test was accepted. Additional sends require approval. Production invitation email
 needs a verified sender domain and a reachable HTTPS application origin. This recommendation does not
@@ -881,36 +986,38 @@ authorize starting another milestone or deploying the application.
 
 ## Recent progress
 
-| Date (Asia/Kolkata) | Update                                                                                                                                                                                                                                                                                    |
-| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 25 November 2026    | Monorepo scaffold implemented and verified; `dev` created from `main` and scaffold pushed                                                                                                                                                                                                 |
-| 26 November 2026    | Approved Stitch landing page implemented; application checks and 8 browser tests passed                                                                                                                                                                                                   |
-| 26 November 2026    | Added this living status record and agent instructions to maintain it with project updates                                                                                                                                                                                                |
-| 26 November 2026    | Landing page and project guidance committed and pushed to `origin/dev` in `aaebdce`; `main` left unchanged                                                                                                                                                                                |
-| 26 November 2026    | Login UI implemented and verified locally: 37 tests and 16 browser checks passed; no dependencies, commit, or push                                                                                                                                                                        |
-| 26 November 2026    | Login QA: fixed input boundary contrast, added missing-password/keyboard/design checks; 38 tests and 20 production browser checks passed                                                                                                                                                  |
-| 26 November 2026    | Login milestone committed and pushed to `origin/dev` as `fb7995c`; remote hash verified and `main` unchanged                                                                                                                                                                              |
-| 26 November 2026    | Sanitized Atlas example, added guarded read-only db:ping; 56 tests/typecheck/lint/build passed; live ping rejected authentication, credentials pending                                                                                                                                    |
-| 26 November 2026    | Retried development ping after confirmed local credential update; Atlas still rejected authentication; safe configuration checks passed                                                                                                                                                   |
-| 26 November 2026    | Restored example placeholders while preserving local env; existing ping still fails authentication; workspace typecheck and 20 database tests passed                                                                                                                                      |
-| 26 November 2026    | User-requested Atlas retry succeeded with pnpm db:ping against advanced_darvas_dev; connection closed, no database writes or environment edits                                                                                                                                            |
-| 26 November 2026    | Authentication Stage 2 models and secure dev bootstrap CLI implemented; 116 tests including atomicity/concurrency passed, typecheck/lint/build verified; no Atlas writes or push                                                                                                          |
-| 26 November 2026    | Stage 3 real login/session/logout and protected shell implemented; 149 tests, 24 compiled browser checks, typecheck/lint/build passed; no real-account tests, commit or push                                                                                                              |
-| 26 November 2026    | Fixed production E2E build/start origin mismatch; 149 tests and 24 compiled browser checks passed on 3001/4001; development services preserved, no commit or push                                                                                                                         |
-| 26 November 2026    | Added server-verified /login redirect for authenticated users; 149 tests and 24 compiled browser checks passed, including no-JS and revoked-cookie regressions; no commit or push                                                                                                         |
-| 26 November 2026    | Authentication/database milestones and login redirect committed and pushed to origin/dev as 8adda68; remote hash verified, secret/format/diff checks passed, main unchanged                                                                                                               |
-| 27 November 2026    | Stage 4 guards/ownership conventions and verified workspace role completed; 183 tests, 40 compiled browser checks, typecheck/lint/build passed; no Atlas use, commit or push                                                                                                              |
-| 27 November 2026    | Stage 5 invitations implemented and verified: 227 tests, 52 compiled browser checks plus two theme checks, typecheck/lint/build passed; development indexes migrated and verified, no real email or accounts created; no commit/push                                                      |
-| 27 November 2026    | Resend development sender configured with existing key preserved; 8 mocked email tests and all 232 regression tests passed, typecheck/lint/build passed; backend started and health verified; no real email or Git delivery                                                               |
-| 27 November 2026    | Approved single generic Resend test accepted (HTTP 200); one request, zero retries, no database writes or application changes; provider ID recorded above; no further sends, commit or push                                                                                               |
-| 27 November 2026    | Stage 5 closeout completed: 237 Vitest tests and 54 compiled browser checks passed, including continuous Admin-created invitation acceptance/login/logout; approved memory-only mock-mail fixture added; no Atlas writes, real email or Git delivery                                      |
-| 27 November 2026    | Stage 4/5 and Resend work committed as d6f8346 and pushed to origin/dev; GitHub branch hash verified; reviewed 59 staged paths and secret/whitespace checks passed; main and local environment unchanged; no deployment or remote CI claim                                                |
-| 27 November 2026    | Milestone 6 authenticated shell implemented: 250 Vitest tests, 60 full compiled browser checks plus 2 More-sheet Logout checks passed; role-aware navigation, responsive/keyboard/theme checks verified; no backend changes, Atlas writes, real email, commit or push                     |
-| 27 November 2026    | Milestone 7A unavailable-state Dashboard UI implemented: 255 Vitest tests across 35 files, 64 compiled Playwright tests, typecheck/lint/build passed; both roles and all requested viewports/themes verified; no APIs, dependencies, Atlas writes, real email or Git delivery             |
-| 27 November 2026    | Milestones 6/7A committed as 59e664c and pushed to origin/dev; remote hash verified, 26 staged paths and credential/format/diff checks passed; main unchanged, no deployment or remote CI claim                                                                                           |
-| 27 November 2026    | Phase 8B contracts/seven market models, native indexes/validators and explicit dry-run preparation implemented; 308 Vitest tests, 64 compiled regressions, typecheck/lint/build/format/diff passed; no parser/API/UI, Atlas access, seed, dependencies or Git delivery                    |
-| 27 November 2026    | Phase 8C bounded CSV/XLSX parsing implemented; 425 Vitest tests (117 new), 64 compiled browser regressions and two compiled parser smoke cases passed; source-worker portability fixed; no Atlas writes, parser routes/persistence, real email or Git delivery                            |
-| 27 November 2026    | Phases 8B/8C committed as 1241ebb and pushed to origin/dev; remote hash verified, 49 staged paths passed scope/credential-pattern/format/diff review; implementation's 425 tests and 64 compiled regressions retained as dated evidence; main unchanged, no deployment or remote CI claim |
+| Date (Asia/Kolkata) | Update                                                                                                                                                                                                                                                                                         |
+| ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 25 November 2026    | Monorepo scaffold implemented and verified; `dev` created from `main` and scaffold pushed                                                                                                                                                                                                      |
+| 26 November 2026    | Approved Stitch landing page implemented; application checks and 8 browser tests passed                                                                                                                                                                                                        |
+| 26 November 2026    | Added this living status record and agent instructions to maintain it with project updates                                                                                                                                                                                                     |
+| 26 November 2026    | Landing page and project guidance committed and pushed to `origin/dev` in `aaebdce`; `main` left unchanged                                                                                                                                                                                     |
+| 26 November 2026    | Login UI implemented and verified locally: 37 tests and 16 browser checks passed; no dependencies, commit, or push                                                                                                                                                                             |
+| 26 November 2026    | Login QA: fixed input boundary contrast, added missing-password/keyboard/design checks; 38 tests and 20 production browser checks passed                                                                                                                                                       |
+| 26 November 2026    | Login milestone committed and pushed to `origin/dev` as `fb7995c`; remote hash verified and `main` unchanged                                                                                                                                                                                   |
+| 26 November 2026    | Sanitized Atlas example, added guarded read-only db:ping; 56 tests/typecheck/lint/build passed; live ping rejected authentication, credentials pending                                                                                                                                         |
+| 26 November 2026    | Retried development ping after confirmed local credential update; Atlas still rejected authentication; safe configuration checks passed                                                                                                                                                        |
+| 26 November 2026    | Restored example placeholders while preserving local env; existing ping still fails authentication; workspace typecheck and 20 database tests passed                                                                                                                                           |
+| 26 November 2026    | User-requested Atlas retry succeeded with pnpm db:ping against advanced_darvas_dev; connection closed, no database writes or environment edits                                                                                                                                                 |
+| 26 November 2026    | Authentication Stage 2 models and secure dev bootstrap CLI implemented; 116 tests including atomicity/concurrency passed, typecheck/lint/build verified; no Atlas writes or push                                                                                                               |
+| 26 November 2026    | Stage 3 real login/session/logout and protected shell implemented; 149 tests, 24 compiled browser checks, typecheck/lint/build passed; no real-account tests, commit or push                                                                                                                   |
+| 26 November 2026    | Fixed production E2E build/start origin mismatch; 149 tests and 24 compiled browser checks passed on 3001/4001; development services preserved, no commit or push                                                                                                                              |
+| 26 November 2026    | Added server-verified /login redirect for authenticated users; 149 tests and 24 compiled browser checks passed, including no-JS and revoked-cookie regressions; no commit or push                                                                                                              |
+| 26 November 2026    | Authentication/database milestones and login redirect committed and pushed to origin/dev as 8adda68; remote hash verified, secret/format/diff checks passed, main unchanged                                                                                                                    |
+| 27 November 2026    | Stage 4 guards/ownership conventions and verified workspace role completed; 183 tests, 40 compiled browser checks, typecheck/lint/build passed; no Atlas use, commit or push                                                                                                                   |
+| 27 November 2026    | Stage 5 invitations implemented and verified: 227 tests, 52 compiled browser checks plus two theme checks, typecheck/lint/build passed; development indexes migrated and verified, no real email or accounts created; no commit/push                                                           |
+| 27 November 2026    | Resend development sender configured with existing key preserved; 8 mocked email tests and all 232 regression tests passed, typecheck/lint/build passed; backend started and health verified; no real email or Git delivery                                                                    |
+| 27 November 2026    | Approved single generic Resend test accepted (HTTP 200); one request, zero retries, no database writes or application changes; provider ID recorded above; no further sends, commit or push                                                                                                    |
+| 27 November 2026    | Stage 5 closeout completed: 237 Vitest tests and 54 compiled browser checks passed, including continuous Admin-created invitation acceptance/login/logout; approved memory-only mock-mail fixture added; no Atlas writes, real email or Git delivery                                           |
+| 27 November 2026    | Stage 4/5 and Resend work committed as d6f8346 and pushed to origin/dev; GitHub branch hash verified; reviewed 59 staged paths and secret/whitespace checks passed; main and local environment unchanged; no deployment or remote CI claim                                                     |
+| 27 November 2026    | Milestone 6 authenticated shell implemented: 250 Vitest tests, 60 full compiled browser checks plus 2 More-sheet Logout checks passed; role-aware navigation, responsive/keyboard/theme checks verified; no backend changes, Atlas writes, real email, commit or push                          |
+| 27 November 2026    | Milestone 7A unavailable-state Dashboard UI implemented: 255 Vitest tests across 35 files, 64 compiled Playwright tests, typecheck/lint/build passed; both roles and all requested viewports/themes verified; no APIs, dependencies, Atlas writes, real email or Git delivery                  |
+| 27 November 2026    | Milestones 6/7A committed as 59e664c and pushed to origin/dev; remote hash verified, 26 staged paths and credential/format/diff checks passed; main unchanged, no deployment or remote CI claim                                                                                                |
+| 27 November 2026    | Phase 8B contracts/seven market models, native indexes/validators and explicit dry-run preparation implemented; 308 Vitest tests, 64 compiled regressions, typecheck/lint/build/format/diff passed; no parser/API/UI, Atlas access, seed, dependencies or Git delivery                         |
+| 27 November 2026    | Phase 8C bounded CSV/XLSX parsing implemented; 425 Vitest tests (117 new), 64 compiled browser regressions and two compiled parser smoke cases passed; source-worker portability fixed; no Atlas writes, parser routes/persistence, real email or Git delivery                                 |
+| 27 November 2026    | Phases 8B/8C committed as 1241ebb and pushed to origin/dev; remote hash verified, 49 staged paths passed scope/credential-pattern/format/diff review; implementation's 425 tests and 64 compiled regressions retained as dated evidence; main unchanged, no deployment or remote CI claim      |
+| 28 November 2026    | Phase 8D-1 secure preview/confirmation and read APIs implemented; 469 Vitest and 70 compiled Playwright tests passed with TypeScript/lint/build/format/diff checks. Queued jobs cannot execute; no Atlas use, real mail, commit or push                                                        |
+| 28 November 2026    | Phase 8D-2A generation storage/readers/publication foundations and dry-run offline migration completed; 513 Vitest tests across 52 files, 70 compiled Playwright tests, typecheck/lint/build/format/diff passed. Runner remains deferred; no Atlas access, dependencies, email, commit or push |
 
 Keep this history concise. Replace stale current-state statements when work ships;
 retain only useful milestone evidence and unresolved decisions. Never record secrets

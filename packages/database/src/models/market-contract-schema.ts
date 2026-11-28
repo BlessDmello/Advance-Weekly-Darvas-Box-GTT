@@ -20,12 +20,24 @@ function shape(node: JsonSchema, key: string, required: boolean): unknown {
     const present = choices.find((entry) => entry.type !== 'null');
     if (!present || choices.length !== 2 || !choices.some((entry) => entry.type === 'null'))
       throw new Error('Unsupported market field union.');
-    return { ...(shape(present, key, false) as object), default: null, required: false };
+    const field = shape(present, key, false) as { validate?: (value: unknown) => boolean };
+    const validate = field.validate;
+    return {
+      ...field,
+      default: null,
+      required: false,
+      ...(validate
+        ? { validate: (value: unknown) => value === null || value === undefined || validate(value) }
+        : {}),
+    };
   }
   if (objectIdFields.has(key)) return { type: Schema.Types.ObjectId, required };
   if (node.format === 'date-time') return { type: Date, required };
   if (node.type === 'object')
-    return { type: new Schema(definition(node), { _id: false, strict: 'throw' }), required };
+    return {
+      type: new Schema(definition(node), { _id: false, versionKey: false, strict: 'throw' }),
+      required,
+    };
   if (node.type === 'array')
     return { type: [shape(node.items as JsonSchema, '', true)], required, default: undefined };
   if (node.type === 'number' || node.type === 'integer')
@@ -61,6 +73,7 @@ function definition(node: JsonSchema): SchemaDefinition {
 export function metadataSchema(contract: z.ZodType): Schema {
   return new Schema(definition(z.toJSONSchema(contract) as JsonSchema), {
     _id: false,
+    versionKey: false,
     strict: 'throw',
   });
 }

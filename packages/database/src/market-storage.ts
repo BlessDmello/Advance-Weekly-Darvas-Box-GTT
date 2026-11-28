@@ -12,6 +12,24 @@ function canonical(value: unknown): string {
       .join(',')}}`;
   return JSON.stringify(value) ?? 'undefined';
 }
+// Exactly the Phase 8B validator, before the optional preview context existed.
+// No other legacy/custom validator is eligible for this explicit additive upgrade.
+function withoutPreviewContext(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(withoutPreviewContext);
+  if (!value || typeof value !== 'object') return value;
+  return Object.fromEntries(
+    Object.entries(value).map(([key, entry]) => [
+      key,
+      key === 'properties' && entry && typeof entry === 'object'
+        ? Object.fromEntries(
+            Object.entries(entry)
+              .filter(([name]) => name !== 'context')
+              .map(([name, child]) => [name, withoutPreviewContext(child)]),
+          )
+        : withoutPreviewContext(entry),
+    ]),
+  );
+}
 export async function inspectMarketStorage(connection: Connection) {
   if (!connection.db) throw new Error('Market database connection is not ready.');
   const missingCollections: string[] = [];
@@ -27,13 +45,18 @@ export async function inspectMarketStorage(connection: Connection) {
     }
     const options = 'options' in info ? info.options : undefined;
     const current = options?.validator;
+    const knownLegacy =
+      ['importBatches', 'importStaging'].includes(name) &&
+      current &&
+      canonical(current) === canonical(withoutPreviewContext(marketValidators[name]));
     if (
       current &&
       Object.keys(current).length > 0 &&
       canonical(current) !== canonical(marketValidators[name])
-    )
-      incompatible.push(`${name}:validator`);
-    else if (
+    ) {
+      if (knownLegacy) validatorsToInstall.push(name);
+      else incompatible.push(`${name}:validator`);
+    } else if (
       !current ||
       Object.keys(current).length === 0 ||
       options?.validationLevel !== 'strict' ||

@@ -51,6 +51,7 @@ it('validates OHLC, optional volume and the supplied basis separately', () => {
   const row = {
     ...syntheticRow(),
     stockId: marketIds.stock,
+    datasetRevision: 1,
     revision: 1,
     sourceImportBatchId: marketIds.batch,
   };

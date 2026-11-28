@@ -13,6 +13,24 @@ export { prepareInvitationStorage, verifyInvitationStorage } from './invitation-
 export { createMarketModels } from './market-models.js';
 export type { MarketModels } from './market-models.js';
 export {
+  createMarketRepository,
+  MarketStorageError,
+  marketFingerprint,
+  stockReferenceFingerprint,
+  sameMarketObservation,
+} from './market-repository.js';
+export type { MarketRepository } from './market-repository.js';
+export { readPublishedPrices } from './published-prices.js';
+export { migrateMarketGenerations } from './market-generation-migration.js';
+export { legacyMarketValidators } from './market-validators.js';
+export { createGenerationRepository } from './market-generations.js';
+export type { GenerationFence } from './market-generations.js';
+export {
+  planCandidateGeneration,
+  generationCapacity,
+  GenerationStorageError,
+} from './market-generation-plan.js';
+export {
   inspectMarketStorage,
   prepareMarketStorage,
   verifyMarketStorage,

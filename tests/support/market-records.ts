@@ -115,6 +115,7 @@ export const syntheticBatch = (): ImportBatchMetadata => ({
   processingScope: 'PRICE_IMPORT',
 });
 export const syntheticJob = (): ImportJobRecord => ({
+  generation: null,
   importBatchId: marketIds.batch,
   stockId: marketIds.stock,
   familyId: marketIds.family,
@@ -163,6 +164,7 @@ export const syntheticManifest = () => {
   };
 };
 export const syntheticRevision = () => ({
+  datasetRevision: 1,
   stockId: marketIds.stock,
   sessionDate: syntheticRow().sessionDate,
   oldPrice: syntheticRow(),

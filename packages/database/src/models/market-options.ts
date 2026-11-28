@@ -71,7 +71,11 @@ export const ohlcDefinition: SchemaDefinition = {
   low: decimalField(),
   close: decimalField(),
 };
-export const ohlcSubSchema: Schema = new Schema(ohlcDefinition, { _id: false, strict: 'throw' });
+export const ohlcSubSchema: Schema = new Schema(ohlcDefinition, {
+  _id: false,
+  versionKey: false,
+  strict: 'throw',
+});
 export const provenanceSubSchema: Schema = new Schema(
   {
     provider: text(120),
@@ -81,7 +85,7 @@ export const provenanceSubSchema: Schema = new Schema(
     declaredAt: { type: Date, required: true },
     verification: { type: String, required: true, enum: ['DECLARED', 'VERIFIED'] },
   },
-  { _id: false, strict: 'throw' },
+  { _id: false, versionKey: false, strict: 'throw' },
 );
 export const rowDefinition: SchemaDefinition = {
   sessionDate: text(10),
@@ -91,7 +95,11 @@ export const rowDefinition: SchemaDefinition = {
   provenance: { type: provenanceSubSchema, required: true },
   qualityFlags: { type: [String], required: true, default: undefined },
 };
-export const rowSubSchema: Schema = new Schema(rowDefinition, { _id: false, strict: 'throw' });
+export const rowSubSchema: Schema = new Schema(rowDefinition, {
+  _id: false,
+  versionKey: false,
+  strict: 'throw',
+});
 
 export function validationValue(value: unknown): unknown {
   if (value instanceof Types.ObjectId) return value.toHexString();
@@ -119,6 +127,42 @@ export function validateMarketRecord(
     const result = validator.safeParse(recordInput(this));
     if (!result.success)
       this.invalidate('marketRecord', 'Market record violates the approved contract.');
+  });
+}
+
+/** Parent/job validation for model-level insertion; a future chunk adapter must also fence writes. */
+export function guardCandidateInsertion(schema: Schema, audit = false) {
+  schema.pre('save', async function () {
+    if (!this.isNew) return;
+    const session = this.$session();
+    if (!session?.inTransaction())
+      throw new Error('Candidate insertion requires an owned transaction.');
+    const stock = await this.db
+      .model('MarketStock')
+      .findOne({
+        _id: this.get('stockId'),
+        'publication.revision': this.get('datasetRevision'),
+        'publication.state': 'IMPORTING',
+        'publication.publishedRevision': { $lt: this.get('datasetRevision') },
+      })
+      .session(session);
+    const job =
+      stock &&
+      (await this.db
+        .model('MarketImportJob')
+        .exists({
+          _id: stock.get('publication.activeJobId'),
+          stockId: stock._id,
+          status: 'RUNNING',
+          'generation.candidateRevision': this.get('datasetRevision'),
+          $expr: { $gt: ['$leaseUntil', '$$NOW'] },
+          ...(audit
+            ? { importBatchId: this.get('importBatchId'), uploadedBy: this.get('changedBy') }
+            : {}),
+        })
+        .session(session));
+    if (!job)
+      throw new Error('Published generations are immutable; a matching candidate job is required.');
   });
 }
 

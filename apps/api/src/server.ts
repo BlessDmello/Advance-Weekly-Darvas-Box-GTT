@@ -3,14 +3,23 @@ import { parseEnvironment } from './config/env.js';
 import { createLogger } from './config/logger.js';
 import { createAuthRuntime } from './modules/auth/runtime.js';
 import { createInvitationSender } from './modules/invitations/email.js';
+import { readMarketReferencePolicy } from './modules/imports/service.js';
 
 const environment = parseEnvironment(process.env);
 const logger = createLogger(environment.LOG_LEVEL);
 const auth = createAuthRuntime(process.env);
-const server = createApp(environment, auth, {
-  repository: () => auth.invitationRepository(),
-  sender: createInvitationSender(environment),
-}).listen(environment.PORT, environment.HOST, () => {
+const server = createApp(
+  environment,
+  auth,
+  {
+    repository: () => auth.invitationRepository(),
+    sender: createInvitationSender(environment),
+  },
+  {
+    repository: () => auth.marketRepository(),
+    policy: () => readMarketReferencePolicy(process.env),
+  },
+).listen(environment.PORT, environment.HOST, () => {
   logger.info({ port: environment.PORT, host: environment.HOST }, 'API listening');
 });
 

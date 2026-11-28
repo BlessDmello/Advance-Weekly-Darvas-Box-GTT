@@ -1,10 +1,11 @@
 # Advanced Darvas Box
 
 A private, invite-only NSE stock analysis and manual swing-trading workspace.
-Phase 1 establishes a pnpm monorepo, a responsive themed frontend, an Express health
-API, shared package boundaries, and a tested development toolchain. Email/password
-login, MongoDB sessions, logout and a minimal protected workspace are implemented.
-Invitation workflows and trading features remain deferred. This is not a
+The pnpm monorepo includes a responsive frontend, secure Login/Logout, MongoDB
+sessions, family invitations, a protected shell and unavailable-state Dashboard UI.
+Market-data contracts, bounded CSV/XLSX parsing and secure preview/confirmation APIs
+are implemented. Confirmed imports remain queued; price processing and trading
+features remain deferred. This is not a
 production-ready trading application.
 
 ## Prerequisites
@@ -145,19 +146,20 @@ responsive sidebar/mobile navigation foundations live in the frontend.
 
 Each app loads its own file; the root `.env.example` is a reference, not an env loader.
 
-| Variable              | Location             | Current requirement                                                                          |
-| --------------------- | -------------------- | -------------------------------------------------------------------------------------------- |
-| `API_INTERNAL_ORIGIN` | Web `.env.local`     | Defaults to `http://127.0.0.1:4000`; server-only rewrite target                              |
-| `NODE_ENV`            | API `.env` / process | `development`, `test`, or `production`                                                       |
-| `HOST`                | API `.env`           | Defaults to `127.0.0.1`                                                                      |
-| `PORT`                | API `.env`           | Defaults to `4000`                                                                           |
-| `WEB_ORIGIN`          | API `.env`           | Defaults to `http://localhost:3000`; reserved for future origin/CSRF policy                  |
-| `LOG_LEVEL`           | API `.env`           | Defaults to `info`; structured Pino JSON                                                     |
-| `MONGODB_URI`         | API `.env`           | Optional for startup; required for explicit `pnpm db:ping`; never commit the real URI        |
-| `MONGODB_DB_NAME`     | API `.env`           | Set to `advanced_darvas_dev` for the explicit development ping                               |
-| `SESSION_SECRET`      | API `.env`, later    | Future authentication only                                                                   |
-| `RESEND_API_KEY`      | API `.env`           | Server-only invitation email credential; optional for startup/health/login                   |
-| `RESEND_FROM_EMAIL`   | API `.env`           | Bare sender address; `onboarding@resend.dev` for development, verified domain for production |
+| Variable                     | Location             | Current requirement                                                                                                                          |
+| ---------------------------- | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `API_INTERNAL_ORIGIN`        | Web `.env.local`     | Defaults to `http://127.0.0.1:4000`; server-only rewrite target                                                                              |
+| `NODE_ENV`                   | API `.env` / process | `development`, `test`, or `production`                                                                                                       |
+| `HOST`                       | API `.env`           | Defaults to `127.0.0.1`                                                                                                                      |
+| `PORT`                       | API `.env`           | Defaults to `4000`                                                                                                                           |
+| `WEB_ORIGIN`                 | API `.env`           | Defaults to `http://localhost:3000`; exact allowed browser Origin for CSRF                                                                   |
+| `LOG_LEVEL`                  | API `.env`           | Defaults to `info`; structured Pino JSON                                                                                                     |
+| `MONGODB_URI`                | API `.env`           | Optional for startup; required for explicit `pnpm db:ping`; never commit the real URI                                                        |
+| `MONGODB_DB_NAME`            | API `.env`           | Set to `advanced_darvas_dev` for the explicit development ping                                                                               |
+| `SESSION_SECRET`             | API `.env`, later    | Future authentication only                                                                                                                   |
+| `RESEND_API_KEY`             | API `.env`           | Server-only invitation email credential; optional for startup/health/login                                                                   |
+| `RESEND_FROM_EMAIL`          | API `.env`           | Bare sender address; `onboarding@resend.dev` for development, verified domain for production                                                 |
+| `MARKET_REFERENCE_APPROVALS` | API `.env`           | Optional bounded JSON of independently reviewed stock/calendar fingerprints and allowed price-source policies; empty approvals block imports |
 
 The browser uses relative `/api/v1` requests. Next.js rewrites them to Express,
 preserving the versioned path. Do not add server credentials to `NEXT_PUBLIC_*`.
@@ -165,9 +167,9 @@ Never log raw environment objects, request bodies, cookies, or credentials.
 
 The API validates current environment values with Zod. It applies Helmet, a bounded
 JSON parser, generated request IDs, no-store responses, and in-process rate limiting.
-Health is excluded from rate limiting for monitoring. This scaffold has no sessions,
-CSRF implementation, user authorization, or production proxy-trust configuration.
-Those belong to the authentication/deployment milestones.
+Health is excluded from rate limiting for monitoring. Session, CSRF, active-account
+and role guards protect private APIs. Production proxy trust remains an explicit
+deployment decision; it is not enabled implicitly.
 
 Health works without MongoDB:
 
@@ -209,9 +211,63 @@ The backend has a worker-isolated single-stock CSV/XLSX parsing module. It prese
 exact decimal text, requires explicit mappings/provenance and a trusted calendar
 snapshot, and returns bounded diagnostics and normalized observations. Unknown price
 basis or unavailable verified sessions block confirmation. No upload route, import
-confirmation, database writes, reference seeding, runner or Admin UI is implemented.
+confirmation, database writes, reference seeding, runner or Admin UI is added by the
+parser itself. Preview/confirmation services are described below.
 See the [module guide](apps/api/src/modules/imports/README.md) for supported formats,
 security/resource limits, dependency decisions and remaining source-file limitations.
+
+### Import preview and confirmation (Phase 8D-1)
+
+The authenticated API implements POST `/api/v1/imports/preview` and
+`/api/v1/imports/commit`, Admin-only family-scoped GET `/api/v1/imports/jobs/:jobId`
+and `/api/v1/imports/batches`, and active-member GET `/api/v1/stocks`.
+See [ADR 0003](docs/adr/0003-import-preview-and-confirmation.md) for multipart fields,
+response envelopes, idempotency, reference approval and transaction guarantees.
+
+No real stock master, calendar or price source is supplied automatically. Independently
+reviewed operator approvals pin stock and calendar record fingerprints; the server-only
+`MARKET_REFERENCE_APPROVALS` JSON defaults to empty lists. The database package exports
+`stockReferenceFingerprint` and `marketFingerprint` for reviewed reference DTOs; a hash
+alone does not establish real-world accuracy. Uploads cannot approve their own data.
+Examples remain credential-free; no real approvals or reference seeds are committed.
+
+Missing market storage returns a sanitized 503 without affecting Login/health.
+`pnpm market-data:prepare` remains a dry-run by default. Explicit operator `--apply`
+can install the recognized additive Phase 8B preview-context validator upgrade;
+unknown validator/index drift requires manual review. Automated tests never invoke
+this command against Atlas.
+
+**Queued imports cannot execute yet.** Confirmation creates an immutable batch and
+durable QUEUED job and atomically removes attached staging TTL deadlines. It changes
+no daily prices, price revisions, dataset publication or indicators. Queued payloads
+remain retained and prevent another active import for that stock. There is no runner,
+retry/cancel API or Admin import UI in this phase; these need later approved work.
+
+### Versioned historical storage (Phase 8D-2A)
+
+Prices are stored by stock, dataset revision and session. Readers select one immutable
+published generation in a database snapshot; incomplete candidates never replace it.
+The storage package includes a bounded complete-history merge planner and fenced
+reservation, assessment, atomic publication and abandonment primitives. No runner,
+automatic claim, retry/resume API, chunk executor or background processing calls them.
+**Confirmed imports still remain queued.** Price publication is separate from screening;
+valid stale/raw/short history carries warnings and never implies indicator readiness.
+See [ADR 0004](docs/adr/0004-versioned-market-storage.md) for consistency and capacity bounds.
+
+The new operator command is `pnpm market-data:migrate-generations`. Its default is a
+read-only compatibility/rollback-preparation report. It reuses `apps/api/.env`, closes
+its own connection and refuses production. Do not run it against Atlas without a
+separate authorized operation. For a reviewed migration, stop market writers, obtain
+and verify a restorable backup, and only then use the explicit
+`--apply --offline-confirmed --backup-confirmed` flags. The flags are acknowledgments;
+the command does not create a backup or perform a restore drill.
+
+The migration recognizes exact legacy/transitional storage, tags coherent legacy
+published rows, initializes job metadata and replaces only known superseded indexes.
+It refuses ambiguous/partial datasets, active execution, unknown constraints and legacy
+correction audits without generation lineage. No reference data is seeded. Do not
+strip generation fields or restore old uniqueness after new generations have been used.
+There is no automatic generation pruning; measure storage before operational use.
 
 ### Read-only Atlas connectivity check
 

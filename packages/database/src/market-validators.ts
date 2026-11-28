@@ -168,7 +168,6 @@ const publication = all(
   any(
     all(
       eq('$publication.state', 'UNAVAILABLE'),
-      eq('$publication.revision', 0),
       eq('$publication.publishedRevision', 0),
       eq('$publication.activeJobId', null),
       eq('$publication.asOfSession', null),
@@ -177,7 +176,7 @@ const publication = all(
     all(
       eq('$publication.state', 'PUBLISHED'),
       { $gte: ['$publication.revision', 1] },
-      eq('$publication.publishedRevision', '$publication.revision'),
+      { $gte: ['$publication.publishedRevision', 1] },
       eq('$publication.activeJobId', null),
       { $ne: ['$publication.asOfSession', null] },
       { $ne: ['$publication.sourceRevisionKey', null] },
@@ -318,7 +317,46 @@ export const marketValidators = {
       previewCounts('$preview.rows.'),
     ),
   ),
-  importJobs: validator(importJobRecordSchema, job),
+  importJobs: validator(
+    importJobRecordSchema,
+    all(
+      job,
+      any(
+        eq('$generation', null),
+        all(
+          any(eq('$generation.candidateRevision', null), {
+            $gt: ['$generation.candidateRevision', '$generation.basePublishedRevision'],
+          }),
+          any(
+            all(eq('$generation.build.rows', 0), eq('$generation.build.lastSession', null)),
+            all(
+              { $gt: ['$generation.build.rows', 0] },
+              { $ne: ['$generation.build.lastSession', null] },
+            ),
+          ),
+        ),
+      ),
+    ),
+  ),
   importStaging: validator(importStagingContract, stage),
 } as const;
+// Recognized pre-generation validators only. Used by the offline migration, never
+// automatically accepted/upgraded by HTTP or ordinary storage preparation.
+const legacy = structuredClone(marketValidators) as Record<string, Json>;
+function removeProperty(name: string, key: string) {
+  const schema = (legacy[name]!.$and as Json[])[0]!.$jsonSchema as Json;
+  delete (schema.properties as Json)[key];
+  schema.required = (schema.required as string[]).filter((entry) => entry !== key);
+}
+removeProperty('dailyPrices', 'datasetRevision');
+removeProperty('priceRevisions', 'datasetRevision');
+removeProperty('importJobs', 'generation');
+(legacy.importJobs!.$and as Json[])[1]!.$expr = job;
+const oldPublication = structuredClone(publication);
+// Recover the exact original expression while preserving other native constraints.
+const branches = (oldPublication.$and as Json[])[1]!.$or as Json[];
+(branches[0]!.$and as Json[]).splice(1, 0, eq('$publication.revision', 0));
+(branches[1]!.$and as Json[])[2] = eq('$publication.publishedRevision', '$publication.revision');
+(legacy.stocks!.$and as Json[])[1]!.$expr = oldPublication;
+export const legacyMarketValidators = legacy as unknown as typeof marketValidators;
 export type MarketCollection = keyof typeof marketValidators;

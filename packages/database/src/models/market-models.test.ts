@@ -15,6 +15,23 @@ import {
 
 const connection = mongoose.createConnection();
 const models = createMarketModels(connection);
+it('accepts nullable diagnostic row references while retaining integer and range validation', async () => {
+  const manifest = syntheticManifest();
+  manifest.metadata.diagnostics = [
+    {
+      code: 'TEST_WARNING',
+      severity: 'WARNING',
+      row: null,
+      field: 'file',
+      message: 'Synthetic diagnostic.',
+    },
+  ];
+  await expect(new models.ImportStaging(manifest).validate()).resolves.toBeUndefined();
+  manifest.metadata.diagnostics[0]!.row = 0;
+  await expect(new models.ImportStaging(manifest).validate()).rejects.toThrow();
+  manifest.metadata.diagnostics[0]!.row = 1.5;
+  await expect(new models.ImportStaging(manifest).validate()).rejects.toThrow();
+});
 afterAll(() => connection.close());
 it('registers seven explicit collections without opening a connection or enabling DDL', () => {
   expect(connection.readyState).toBe(0);
@@ -50,6 +67,7 @@ it('uses Decimal128 and rejects JS Number coercion, unsupported precision and in
   const data = {
     ...syntheticRow(),
     stockId: marketIds.stock,
+    datasetRevision: 1,
     revision: 1,
     sourceImportBatchId: marketIds.batch,
   };

@@ -21,7 +21,7 @@ describe('API foundation', () => {
   });
 
   it('returns a typed 404 with a generated request ID', async () => {
-    const response = await request(app).get('/api/v1/stocks').expect(404);
+    const response = await request(app).get('/api/v1/missing').expect(404);
     const error = apiErrorSchema.parse(response.body);
     expect(error.error.code).toBe('NOT_FOUND');
     expect(error.error.requestId).toBe(response.headers['x-request-id']);

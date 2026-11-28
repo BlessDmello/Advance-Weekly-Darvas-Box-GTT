@@ -92,6 +92,7 @@ export const normalizedPriceRowSchema = z
 
 export const dailyOhlcvSchema = normalizedPriceRowSchema.safeExtend({
   stockId: marketObjectIdSchema,
+  datasetRevision: z.number().int().min(1).max(Number.MAX_SAFE_INTEGER),
   revision: z.number().int().min(1).max(Number.MAX_SAFE_INTEGER),
   sourceImportBatchId: marketObjectIdSchema,
 });
@@ -162,8 +163,7 @@ export const datasetPublicationSchema = z
     if (value.publishedRevision > value.revision) fail();
     if (
       value.state === 'UNAVAILABLE' &&
-      (value.revision !== 0 ||
-        value.publishedRevision !== 0 ||
+      (value.publishedRevision !== 0 ||
         value.activeJobId ||
         value.asOfSession ||
         value.sourceRevisionKey)
@@ -172,7 +172,7 @@ export const datasetPublicationSchema = z
     if (
       value.state === 'PUBLISHED' &&
       (value.revision < 1 ||
-        value.revision !== value.publishedRevision ||
+        value.publishedRevision < 1 ||
         value.activeJobId ||
         !value.asOfSession ||
         !value.sourceRevisionKey)
@@ -195,6 +195,17 @@ export function assertDatasetTransition(
   datasetPublicationSchema.parse(previous);
   datasetPublicationSchema.parse(next);
   if (JSON.stringify(previous) === JSON.stringify(next)) return;
+  // An abandoned candidate retains the allocator and the old published pointer.
+  if (
+    ['IMPORTING', 'UNPUBLISHED'].includes(previous.state) &&
+    next.state === (previous.publishedRevision > 0 ? 'PUBLISHED' : 'UNAVAILABLE') &&
+    next.revision === previous.revision &&
+    next.publishedRevision === previous.publishedRevision &&
+    next.activeJobId === null &&
+    next.asOfSession === previous.asOfSession &&
+    next.sourceRevisionKey === previous.sourceRevisionKey
+  )
+    return;
   if (previous.state === 'UNAVAILABLE' || previous.state === 'PUBLISHED') {
     if (
       next.state !== 'IMPORTING' ||
@@ -209,6 +220,7 @@ export function assertDatasetTransition(
   if (
     !['IMPORTING', 'UNPUBLISHED', 'PUBLISHED'].includes(next.state) ||
     next.revision !== previous.revision ||
+    (next.state === 'PUBLISHED' && next.publishedRevision !== previous.revision) ||
     (next.state !== 'PUBLISHED' &&
       (next.publishedRevision !== previous.publishedRevision ||
         next.activeJobId !== previous.activeJobId ||

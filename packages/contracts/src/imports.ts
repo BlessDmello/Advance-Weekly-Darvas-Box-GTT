@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { jobGenerationSchema } from './market-generations.js';
 import {
   dataQualitySchema,
   marketHashSchema,
@@ -6,6 +7,7 @@ import {
   marketTimestampSchema,
   sessionDateSchema,
   sourceProvenanceSchema,
+  stockIdentitySchema,
 } from './market-data.js';
 
 export const IMPORT_LIMITS = Object.freeze({
@@ -94,6 +96,17 @@ export const importPreviewMetadataSchema = z
       .int()
       .min(0)
       .max(Number.MAX_SAFE_INTEGER - 1),
+    context: z
+      .object({
+        stockIdentity: stockIdentitySchema,
+        referenceApprovalHash: marketHashSchema,
+        referenceDataHash: marketHashSchema,
+        dateMode: z.enum(['ISO', 'EXCEL_SERIAL']),
+        minimumHistorySessions: count,
+        expectedCompletedSession: sessionDateSchema.nullable(),
+      })
+      .strict()
+      .optional(),
     expiresAt: marketTimestampSchema,
   })
   .strict()
@@ -175,6 +188,7 @@ export const importJobPhaseSchema = z.enum([
 ]);
 export const importJobRecordSchema = z
   .object({
+    generation: jobGenerationSchema.nullable().default(null),
     importBatchId: marketObjectIdSchema,
     stockId: marketObjectIdSchema,
     familyId: marketObjectIdSchema,
@@ -284,6 +298,18 @@ export function assertImportJobTransition(previous: ImportJobRecord, next: Impor
   for (const field of ['inserted', 'updated', 'unchanged'] as const)
     if (next.counts[field] < previous.counts[field])
       throw new Error('Committed counters cannot move backward.');
+  if (
+    previous.generation &&
+    (!next.generation ||
+      previous.generation.basePublishedRevision !== next.generation.basePublishedRevision ||
+      previous.generation.candidateRevision !== next.generation.candidateRevision ||
+      next.generation.build.rows < previous.generation.build.rows ||
+      next.generation.build.bytes < previous.generation.build.bytes ||
+      (previous.generation.build.lastSession &&
+        (!next.generation.build.lastSession ||
+          next.generation.build.lastSession < previous.generation.build.lastSession)))
+  )
+    throw new Error('Generation identity and durable build progress cannot rewind.');
   if (
     previous.startedAt &&
     (!next.startedAt || Date.parse(previous.startedAt) !== Date.parse(next.startedAt))

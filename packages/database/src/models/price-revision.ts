@@ -14,11 +14,13 @@ import {
   text,
   validateMarketRecord,
   guardMarketUpdates,
+  guardCandidateInsertion,
 } from './market-options.js';
 import type { Stored } from '../market-types.js';
 export const priceRevisionContract = z
   .object({
     stockId: marketObjectIdSchema,
+    datasetRevision: z.number().int().min(1).max(Number.MAX_SAFE_INTEGER),
     sessionDate: sessionDateSchema,
     oldPrice: normalizedPriceRowSchema,
     newPrice: normalizedPriceRowSchema,
@@ -45,6 +47,7 @@ export type PriceRevisionRecord = z.infer<typeof priceRevisionContract>;
 export const priceRevisionSchema: Schema<Stored<PriceRevisionRecord>> = new Schema(
   {
     stockId: reference(),
+    datasetRevision: { ...integer(1), immutable: true },
     sessionDate: text(10),
     oldPrice: { type: rowSubSchema, required: true },
     newPrice: { type: rowSubSchema, required: true },
@@ -58,12 +61,13 @@ export const priceRevisionSchema: Schema<Stored<PriceRevisionRecord>> = new Sche
   { ...marketModelOptions, collection: 'priceRevisions' },
 );
 priceRevisionSchema.index(
-  { stockId: 1, sessionDate: 1, newRevision: 1 },
-  { name: 'price_revision_identity', unique: true },
+  { stockId: 1, datasetRevision: 1, sessionDate: 1, newRevision: 1 },
+  { name: 'generation_price_revision_identity', unique: true },
 );
 priceRevisionSchema.index(
   { stockId: 1, sessionDate: 1, changedAt: -1 },
   { name: 'price_revision_history' },
 );
 validateMarketRecord(priceRevisionSchema, priceRevisionContract);
+guardCandidateInsertion(priceRevisionSchema, true);
 guardMarketUpdates(priceRevisionSchema, true);

@@ -81,7 +81,9 @@ it.each(['ADMIN', 'MEMBER'] as const)(
       expect(screen.queryByText('Market Data Import')).not.toBeInTheDocument();
     }
     for (const link of screen.getAllByRole('link'))
-      expect(['/dashboard', '/admin/invitations']).toContain(link.getAttribute('href'));
+      expect(['/dashboard', '/admin/invitations', '/admin/imports']).toContain(
+        link.getAttribute('href'),
+      );
     expect(isActiveRoute('/dashboard-extra', '/dashboard')).toBe(false);
   },
 );

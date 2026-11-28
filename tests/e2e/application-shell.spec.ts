@@ -19,7 +19,9 @@ for (const role of ['ADMIN', 'MEMBER'] as const) {
       'page',
     );
     for (const link of await sidebar.getByRole('link').all())
-      expect(['/dashboard', '/admin/invitations']).toContain(await link.getAttribute('href'));
+      expect(['/dashboard', '/admin/invitations', '/admin/imports']).toContain(
+        await link.getAttribute('href'),
+      );
     await expect(
       sidebar.getByRole('button', { name: 'Stock Screener, Coming soon' }),
     ).toBeDisabled();

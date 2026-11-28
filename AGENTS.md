@@ -43,12 +43,12 @@ APIs remain deferred. Do not describe this release
 as production-ready or the workspace shell as a completed trading dashboard.
 
 The authenticated application shell lives in `apps/web/app/(private)/layout.tsx`
-and `apps/web/components/shell`. It wraps only Dashboard and invitation administration;
+and `apps/web/components/shell`. It wraps Dashboard, invitation and import administration;
 public Landing, Login and invitation acceptance retain their own layouts. Reuse the
 existing brand, public palette/fonts, theme controls and LogoutButton. Sidebar collapse
 is state for the mounted shell only; do not persist sidebar state or identity/role
 flags. Preserve the existing theme preference behavior.
-Only Dashboard and Family Management have implemented navigation destinations.
+Dashboard, Family Management and Admin Market Data Import have implemented navigation destinations.
 Future entries are disabled with Coming soon labels and no href; Administration is
 omitted for Members. Keep the canonical navigation definition in `shell/navigation.ts`.
 Use the selected Stitch Main Trading Dashboard references `13580afd125a432a8f2d8eef02d5aee4`
@@ -102,7 +102,7 @@ including without JavaScript. Cookie presence alone must not trigger a redirect.
 Invalid/revoked sessions or unavailable validation leave the public form accessible.
 
 Implement only the user's requested milestone. Business-resource APIs,
-screening, DMA/CAR/Darvas calculations, portfolio accounting, import workflows, trading
+screening, DMA/CAR/Darvas calculations, portfolio accounting, trading
 notification delivery, scheduled jobs, and cloud deployment remain deferred until requested.
 Existing scaffold and landing-page maintenance do not require reapproving Phase 1.
 
@@ -110,7 +110,7 @@ Phase 8B adds market-data contracts and the seven market/import model definition
 Phase 8C adds bounded, backend-only CSV/XLSX parsing and validation. Phase 8D-1 adds
 Admin preview/confirmation, family-scoped job/batch reads and active-member stock
 lookup. Phase 8D-2B adds bounded transactional price execution and explicit recovery;
-reference seeding and import UI remain deferred. See
+Phase 8E adds the Admin import UI; reference seeding remains deferred. See
 `docs/adr/0002-market-data-import-foundation.md` for additive storage decisions.
 `createMarketModels` only registers models. `verifyMarketStorage` is read-only;
 `prepareMarketStorage` is explicit and dry-run by default. The development-only
@@ -166,7 +166,7 @@ decimals, and never mutate published prices/private trading data. RETRY payloads
 have no TTL. Only successful completion permits seven-day staging retirement.
 Use `pnpm imports:resume --job <jobId>` for inspection; mutation requires --apply
 and runs one bounded development-only slice. Do not run it against Atlas during
-automated tests. Scheduler, pruning, market UI and strategy execution stay deferred.
+automated tests. Scheduler, pruning and strategy execution stay deferred.
 The offline market-data:migrate-generations command is dry-run-first and development
 only; --apply additionally needs --offline-confirmed and --backup-confirmed. These
 attestations do not create or verify a backup. Only this explicit migration may
@@ -174,12 +174,31 @@ replace the recognized old price uniqueness indexes; ordinary preparation must
 refuse legacy generation storage and unrelated drift. Never invoke it against Atlas
 as part of testing. Ambiguous legacy publication or audit lineage must fail closed.
 
+Phase 8E routes `/admin/imports` and `/admin/imports/jobs/[jobId]` use page-level
+requireAdminUser guards in addition to the private layout and backend guards. Reuse
+the same-origin typed import client and existing CSRF flow. Stocks are selectable
+only when ACTIVE and referenceApproved; label them Approved NSE stocks, never a
+verified Nifty 100 list. Canonical mappings are editable defaults, not detection.
+The default 200-session history-warning threshold is editable and independent of
+DMA/screening readiness. Expected completed session stays null unless explicitly set.
+Keep preview capabilities, files and action UUIDs in memory, never URLs or storage.
+Every logical confirmation/retry retains its UUID and payload after uncertain
+responses. Preview-input changes invalidate the preview/key. Lock uncertain action
+inputs and offer same-action recovery plus history/status checks; do not silently
+resubmit with a new key. Serialized polling pauses on hidden pages, unavailable
+execution, terminal states, denied access and unmount. Disabled execution means
+awaiting operator-controlled execution, not automatic processing. Only backend
+recovery eligibility permits retry. Completion is price-only with indicators deferred;
+candidate counters do not establish publication. Never expose worker/hash/log fields
+or add runner enablement, operator commands, price parsing or reference seeding to UI.
+Synthetic CSV/XLSX and stock/calendar fixtures remain disposable test-only data.
+
 Use `apps/api/src/modules/imports/parsing/parser.ts` for bounded parser execution;
 see the module `README.md` for source profiles, limits and dependency decisions.
 Reuse shared decimal/date/OHLC validators. Never convert financial cell text through
 Number/parseFloat, infer adjustment basis from Adjusted Close, or evaluate formulas.
 Unknown basis and absent/unverified calendar coverage block confirmation. Resolve the
-selected stock and calendar snapshot from trusted reference sources in future API
+selected stock and calendar snapshot from trusted reference sources in API
 integration; uploaded values cannot certify their own master/calendar provenance.
 The result's eligibility is parser readiness, not authorization or an import commit.
 Tests use synthetic stock/session fixtures only; they establish no real NSE calendar
@@ -437,6 +456,10 @@ Frontend uses port 3000; Express uses port 4000. Browser calls use relative
 - Run checks appropriate to the change. For application/dependency changes, run
   `pnpm typecheck`, `pnpm lint`, `pnpm test`, `pnpm build`, and `pnpm format:check`.
   Documentation-only changes normally need formatting and diff checks, not app tests.
+- On memory-constrained Windows machines, run full Vitest, production builds and
+  compiled Playwright sequentially. `pnpm test --maxWorkers=1` and
+  `pnpm test:e2e --workers=1` reduce concurrent load. Do not weaken production
+  transaction budgets or silently skip security tests to hide resource failures.
 - Add or update meaningful tests for changed behavior. Do not create dummy checks,
   empty success scripts, invented golden data, or unnecessary implementation mirrors.
 - Database integration tests start a test-owned loopback MongoDB replica set using

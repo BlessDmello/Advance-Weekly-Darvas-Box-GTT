@@ -39,7 +39,14 @@ export async function importTestDependencies(
       },
     ],
   };
-  for (const symbol of ['SYNTH-DESK', 'SYNTH-MOB']) {
+  for (const symbol of [
+    'SYNTH-DESK',
+    'SYNTH-MOB',
+    'UI-DESK-CSV',
+    'UI-MOB-CSV',
+    'UI-DESK-XLSX',
+    'UI-MOB-XLSX',
+  ]) {
     const stock = { ...syntheticStock(), symbol };
     const document = await models.Stock.create(stock);
     policy.stocks.push({ stockId: document.id, fingerprint: stockReferenceFingerprint(stock) });

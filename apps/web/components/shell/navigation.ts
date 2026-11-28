@@ -37,7 +37,7 @@ export const navigationGroups: NavigationGroup[] = [
     label: 'Administration',
     adminOnly: true,
     items: [
-      { label: 'Market Data Import', icon: Upload },
+      { label: 'Market Data Import', icon: Upload, href: '/admin/imports' },
       { label: 'Family Management', icon: Users, href: '/admin/invitations' },
     ],
   },
@@ -56,6 +56,8 @@ export function isActiveRoute(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 export function shellPageTitle(pathname: string) {
+  if (isActiveRoute(pathname, '/admin/imports/jobs')) return 'Import job details';
+  if (isActiveRoute(pathname, '/admin/imports')) return 'Market data import';
   if (isActiveRoute(pathname, '/admin/invitations')) return 'Family invitations';
   return pathname === '/dashboard' ? 'Dashboard' : 'Workspace';
 }

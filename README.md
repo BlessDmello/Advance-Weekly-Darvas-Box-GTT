@@ -241,8 +241,38 @@ Confirmation creates an immutable batch and
 durable QUEUED job and atomically removes attached staging TTL deadlines. It changes
 no daily prices, price revisions, dataset publication or indicators. Queued payloads
 remain retained and prevent another active import for that stock. Phase 8D-2B now
-adds opt-in execution, Admin retry and operator resume; cancel and Admin import UI
-remain deferred. Confirmation itself never executes price writes synchronously.
+adds opt-in execution, Admin retry and operator resume. Phase 8E adds the Admin import
+UI below; cancellation remains deferred. Confirmation itself never executes price writes synchronously.
+
+### Admin import UI (Phase 8E)
+
+Sign in as an Admin and open **Market Data Import** (`/admin/imports`). Search and
+select an active, reference-approved stock. The label **Approved NSE stocks** does
+not certify Nifty 100 membership. Select one CSV/XLSX (3 MiB, 5,000 rows maximum),
+declare provider/reference and Raw/Adjusted basis, requested session range and exact
+column mapping. Defaults are editable canonical headers, not automatic detection.
+Adjusted data needs a declared adjustment version; source metadata never certifies
+uploaded prices. Leave optional expected completed session blank for unknown.
+The editable 200-session warning threshold is separate from DMA and eligibility.
+
+Validate, review blocking errors/warnings and calendar coverage, then explicitly
+confirm. Changed historical records require a correction reason. Changing any preview
+input invalidates the previous preview. Previews expire after 30 minutes. Confirmation
+queues a price-only job; `/admin/imports/jobs/[jobId]` shows verified counters, quality,
+diagnostics and eligible retry actions. Family history links back to these guarded pages.
+No indicators, signals, portfolio data or screening readiness are calculated by this UI.
+
+The runner stays disabled by default. Queued jobs honestly await operator-controlled
+execution; the UI cannot enable it or perform operator commands. Active jobs poll every
+five seconds without overlapping requests, pausing when hidden or terminal. Manual
+refresh remains available. Uncertain confirmation/retry responses retain the same
+UUID and payload in memory. Use the same-action retry or check history/status before
+starting again. Leaving/reloading the page loses that in-memory recovery context.
+
+Real imports still require separately reviewed stock, calendar and price-source
+approvals plus explicitly prepared storage. This milestone does not seed or approve
+reference data, change local runner settings or run imports against Atlas. Automated
+browser checks use isolated synthetic files/reference records and mocked email.
 
 ### Versioned historical storage (Phase 8D-2A)
 
@@ -490,7 +520,7 @@ calls may overrun a cooperative slice; interrupted work relies on durable
 checkpoints and lease expiry. Completed prices remain ineligible for screening
 with derived processing deferred. Private trading data is not modified.
 
-Deferred: business-resource APIs and their ownership integration, import Admin UI,
+Deferred: business-resource APIs and their ownership integration,
 verified stock/calendar reference seeding, screening, DMA/CAR/Darvas calculations, portfolio accounting,
 notifications, scheduled jobs, live feeds, cloud deployment, and broker automation.
 
